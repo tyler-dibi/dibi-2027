@@ -23,9 +23,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Check the Cloudflare settings
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          HAS_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+          PROJECT: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
+        run: |
+          missing=0
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::error::Add the CLOUDFLARE_API_TOKEN repository secret (Settings > Secrets and variables > Actions > Secrets)."; missing=1
+          fi
+          if [ "$HAS_ACCOUNT" != "true" ]; then
+            echo "::error::Add the CLOUDFLARE_ACCOUNT_ID repository secret (Settings > Secrets and variables > Actions > Secrets)."; missing=1
+          fi
+          if [ -z "$PROJECT" ]; then
+            echo "::error::Add CLOUDFLARE_PROJECT_NAME as a repository variable, not a secret (Settings > Secrets and variables > Actions > Variables)."; missing=1
+          fi
+          exit $missing
 
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: npm
