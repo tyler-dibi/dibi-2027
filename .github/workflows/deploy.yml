@@ -62,6 +62,7 @@ jobs:
           PROJECT: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           BRANCH: ${{ github.ref_name }}
         run: |
+          set -o pipefail
           npx --yes wrangler@4 pages deploy dist --project-name="$PROJECT" --branch="$BRANCH" --commit-dirty=true 2>&1 | tee deploy.log
           if [ "$BRANCH" = "main" ]; then
             url="https://$PROJECT.pages.dev"
