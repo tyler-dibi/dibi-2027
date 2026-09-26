@@ -56,20 +56,19 @@ jobs:
           CF_PAGES_BRANCH: ${{ github.ref_name }}
 
       - name: Publish to Cloudflare Pages
-        id: publish
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --branch=${{ github.ref_name }}
-
-      - name: Show the URL
         env:
-          ALIAS_URL: ${{ steps.publish.outputs.pages-deployment-alias-url }}
-          DEPLOYMENT_URL: ${{ steps.publish.outputs.deployment-url }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ vars.CLOUDFLARE_PROJECT_NAME }}
           BRANCH: ${{ github.ref_name }}
         run: |
+          npx --yes wrangler@4 pages deploy dist --project-name="$PROJECT" --branch="$BRANCH" --commit-dirty=true 2>&1 | tee deploy.log
+          if [ "$BRANCH" = "main" ]; then
+            url="https://$PROJECT.pages.dev"
+          else
+            url=$(grep -oE 'https://[^ ]+\.pages\.dev' deploy.log | tail -1)
+          fi
           {
             echo "### Published \`$BRANCH\`"
-            echo "Live at: ${ALIAS_URL:-$DEPLOYMENT_URL}"
+            echo "Live at: $url"
           } >> "$GITHUB_STEP_SUMMARY"
