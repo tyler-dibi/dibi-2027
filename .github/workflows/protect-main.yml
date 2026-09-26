@@ -1,0 +1,42 @@
+# Keeps `main` as the blank playground template.
+#
+# GitHub only enforces branch protection on private repos with a paid plan, so this workflow is the free
+# substitute: if anyone other than the repo owner pushes or merges into `main`, it moves `main` straight back to
+# where it was. The work isn't lost; it's still on the branch it came from.
+#
+# If the repo moves to a paid plan or an organisation, replace this with a branch ruleset and delete this file.
+name: Protect main
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  restore-main:
+    if: github.actor != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Move main back to its previous commit
+        env:
+          BEFORE: ${{ github.event.before }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "main was just created; nothing to restore."
+            exit 0
+          fi
+          git push --force origin "$BEFORE:refs/heads/main"
+          {
+            echo "### main was restored"
+            echo "@$ACTOR changed \`main\`, which is reserved for the blank playground template."
+            echo "It has been moved back to \`${BEFORE:0:7}\`. Keep designing on your own branch; it's published there."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::main is reserved for the blank template. Your change was undone; it is still on your branch."
+          exit 1

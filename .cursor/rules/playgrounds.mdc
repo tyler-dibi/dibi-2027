@@ -1,0 +1,17 @@
+---
+description: How to build and edit playground pages
+globs: src/playgrounds/**
+alwaysApply: false
+---
+
+# Playgrounds
+
+- One playground = one file in `src/playgrounds/<slug>.tsx`, exporting `meta = { title }` and a default component.
+- Create new playgrounds with `npm run new-playground -- "Title"`, not by hand. They appear in the left nav automatically.
+- Shared helpers go in files starting with `_` (e.g. `_invoice-data.tsx`); they are not listed as playgrounds.
+- Allowed imports: `react`, `carbon-react/lib/components/*`, `carbon-react/lib/hooks/*`, and `./` siblings. Nothing else.
+- Layout with `Box` (`p`, `m`, `gap`, `display="flex" | "grid"`, `bg="var(--colors…)"`), text with `Typography`.
+- Surfaces: `Tile orientation="vertical"`, `Card`, or `Box` with `borderRadius`/`boxShadow` tokens.
+- Use realistic UK-English content and `useState` so prototypes are interactive.
+- Live examples of every component: `src/catalog/previews/*.tsx` and http://localhost:5173/components.
+- The user previews the page at http://localhost:5173/playground/<slug>, or full screen at `/preview/<slug>`.

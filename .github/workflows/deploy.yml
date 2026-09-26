@@ -1,0 +1,57 @@
+# Builds every push and publishes it to Cloudflare Pages:
+#   main      -> https://<project>.pages.dev              (the blank template)
+#   any other -> https://<branch>.<project>.pages.dev     (updates on every push)
+#
+# Builds run on GitHub (up to 20 at once) rather than Cloudflare's build queue (one at a time), so many teams can
+# push at the same time. Setup: docs/publishing.md.
+name: Deploy
+
+on:
+  push:
+    branches: ["**"]
+
+# A newer push to the same branch replaces a build that hasn't finished yet.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build (includes the Carbon-only lint and type checks)
+        run: npm run build
+        env:
+          CF_PAGES_BRANCH: ${{ github.ref_name }}
+
+      - name: Publish to Cloudflare Pages
+        id: publish
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT_NAME }} --branch=${{ github.ref_name }}
+
+      - name: Show the URL
+        env:
+          ALIAS_URL: ${{ steps.publish.outputs.pages-deployment-alias-url }}
+          DEPLOYMENT_URL: ${{ steps.publish.outputs.deployment-url }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          {
+            echo "### Published \`$BRANCH\`"
+            echo "Live at: ${ALIAS_URL:-$DEPLOYMENT_URL}"
+          } >> "$GITHUB_STEP_SUMMARY"

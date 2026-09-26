@@ -1,0 +1,10 @@
+node_modules
+dist
+*.tsbuildinfo
+.vite
+.DS_Store
+*.log
+
+# Workshop cards hold the shared login
+workshop.config.json
+workshop-cards.html

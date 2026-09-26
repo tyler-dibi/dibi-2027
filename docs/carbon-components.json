@@ -1,0 +1,1320 @@
+{
+  "version": "162.4.0",
+  "inventory": [
+    {
+      "folder": "accordion",
+      "importPath": "carbon-react/lib/components/accordion",
+      "exports": [
+        {
+          "name": "Accordion",
+          "isDefault": false
+        },
+        {
+          "name": "AccordionGroup",
+          "isDefault": false,
+          "deprecated": "AccordionGroup has been deprecated. Stack Accordion components directly instead."
+        }
+      ]
+    },
+    {
+      "folder": "action-popover",
+      "importPath": "carbon-react/lib/components/action-popover",
+      "exports": [
+        {
+          "name": "ActionPopover",
+          "isDefault": false
+        },
+        {
+          "name": "ActionPopoverMenu",
+          "isDefault": false
+        },
+        {
+          "name": "ActionPopoverItem",
+          "isDefault": false
+        },
+        {
+          "name": "ActionPopoverMenuButton",
+          "isDefault": false
+        },
+        {
+          "name": "ActionPopoverDivider",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "adaptive-sidebar",
+      "importPath": "carbon-react/lib/components/adaptive-sidebar",
+      "exports": [
+        {
+          "name": "AdaptiveSidebar",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "advanced-color-picker",
+      "importPath": "carbon-react/lib/components/advanced-color-picker",
+      "exports": [
+        {
+          "name": "AdvancedColorPicker",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "alert",
+      "importPath": "carbon-react/lib/components/alert",
+      "exports": [
+        {
+          "name": "Alert",
+          "isDefault": true,
+          "deprecated": "Alert has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "anchor-navigation",
+      "importPath": "carbon-react/lib/components/anchor-navigation",
+      "exports": [
+        {
+          "name": "AnchorNavigation",
+          "isDefault": false
+        },
+        {
+          "name": "AnchorNavigationItem",
+          "isDefault": false
+        },
+        {
+          "name": "AnchorSectionDivider",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "badge",
+      "importPath": "carbon-react/lib/components/badge",
+      "exports": [
+        {
+          "name": "Badge",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "batch-selection",
+      "importPath": "carbon-react/lib/components/batch-selection",
+      "exports": [
+        {
+          "name": "BatchSelection",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "box",
+      "importPath": "carbon-react/lib/components/box",
+      "exports": [
+        {
+          "name": "Box",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "breadcrumbs",
+      "importPath": "carbon-react/lib/components/breadcrumbs",
+      "exports": [
+        {
+          "name": "Breadcrumbs",
+          "isDefault": false
+        },
+        {
+          "name": "Crumb",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "button",
+      "importPath": "carbon-react/lib/components/button",
+      "exports": [
+        {
+          "name": "Button",
+          "isDefault": true,
+          "deprecated": "This version of Button has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "button",
+      "importPath": "carbon-react/lib/components/button/__next__",
+      "next": true,
+      "exports": [
+        {
+          "name": "Button",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "button-bar",
+      "importPath": "carbon-react/lib/components/button-bar",
+      "exports": [
+        {
+          "name": "ButtonBar",
+          "isDefault": true,
+          "deprecated": "`ButtonBar` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "button-minor",
+      "importPath": "carbon-react/lib/components/button-minor",
+      "exports": [
+        {
+          "name": "ButtonMinor",
+          "isDefault": true,
+          "deprecated": "`ButtonMinor` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "button-toggle",
+      "importPath": "carbon-react/lib/components/button-toggle",
+      "exports": [
+        {
+          "name": "ButtonToggle",
+          "isDefault": false
+        },
+        {
+          "name": "ButtonToggleGroup",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "carbon-provider",
+      "importPath": "carbon-react/lib/components/carbon-provider",
+      "exports": [
+        {
+          "name": "CarbonProvider",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "card",
+      "importPath": "carbon-react/lib/components/card",
+      "exports": [
+        {
+          "name": "Card",
+          "isDefault": true
+        },
+        {
+          "name": "Card",
+          "isDefault": false
+        },
+        {
+          "name": "CardColumn",
+          "isDefault": false,
+          "deprecated": "`CardColumn` has been deprecated."
+        },
+        {
+          "name": "CardFooter",
+          "isDefault": false
+        },
+        {
+          "name": "CardRow",
+          "isDefault": false,
+          "deprecated": "`CardRow` has been deprecated."
+        }
+      ]
+    },
+    {
+      "folder": "checkbox",
+      "importPath": "carbon-react/lib/components/checkbox",
+      "exports": [
+        {
+          "name": "CheckboxGroup",
+          "isDefault": false
+        },
+        {
+          "name": "Checkbox",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "confirm",
+      "importPath": "carbon-react/lib/components/confirm",
+      "exports": [
+        {
+          "name": "Confirm",
+          "isDefault": true,
+          "deprecated": "See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "content",
+      "importPath": "carbon-react/lib/components/content",
+      "exports": [
+        {
+          "name": "Content",
+          "isDefault": true,
+          "deprecated": "`Content` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "date",
+      "importPath": "carbon-react/lib/components/date",
+      "exports": [
+        {
+          "name": "DateInput",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "date-range",
+      "importPath": "carbon-react/lib/components/date-range",
+      "exports": [
+        {
+          "name": "DateRange",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "decimal",
+      "importPath": "carbon-react/lib/components/decimal",
+      "exports": [
+        {
+          "name": "Decimal",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "definition-list",
+      "importPath": "carbon-react/lib/components/definition-list",
+      "exports": [
+        {
+          "name": "Dl",
+          "isDefault": false
+        },
+        {
+          "name": "Dt",
+          "isDefault": false
+        },
+        {
+          "name": "Dd",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "detail",
+      "importPath": "carbon-react/lib/components/detail",
+      "exports": [
+        {
+          "name": "Detail",
+          "isDefault": true,
+          "deprecated": "`Detail` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "dialog",
+      "importPath": "carbon-react/lib/components/dialog",
+      "exports": [
+        {
+          "name": "Dialog",
+          "isDefault": true
+        },
+        {
+          "name": "DialogHeader",
+          "isDefault": false
+        },
+        {
+          "name": "DialogHeadingStatus",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "dialog-full-screen",
+      "importPath": "carbon-react/lib/components/dialog-full-screen",
+      "exports": [
+        {
+          "name": "DialogFullScreen",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "dismissible-box",
+      "importPath": "carbon-react/lib/components/dismissible-box",
+      "exports": [
+        {
+          "name": "DismissibleBox",
+          "isDefault": true,
+          "deprecated": "`DismissibleBox` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "divider",
+      "importPath": "carbon-react/lib/components/divider",
+      "exports": [
+        {
+          "name": "Divider",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "draggable",
+      "importPath": "carbon-react/lib/components/draggable",
+      "exports": [
+        {
+          "name": "DraggableContainer",
+          "isDefault": false
+        },
+        {
+          "name": "DraggableItem",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "drawer",
+      "importPath": "carbon-react/lib/components/drawer",
+      "exports": [
+        {
+          "name": "Drawer",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "duelling-picklist",
+      "importPath": "carbon-react/lib/components/duelling-picklist",
+      "exports": [
+        {
+          "name": "DuellingPicklist",
+          "isDefault": false,
+          "deprecated": "`DuellingPicklist` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "PicklistDivider",
+          "isDefault": false,
+          "deprecated": "`PicklistDivider` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "PicklistItem",
+          "isDefault": false,
+          "deprecated": "`PicklistItem` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "Picklist",
+          "isDefault": false,
+          "deprecated": "`Picklist` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "PicklistPlaceholder",
+          "isDefault": false,
+          "deprecated": "`PicklistPlaceholder` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "PicklistGroup",
+          "isDefault": false,
+          "deprecated": "`PicklistGroup` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "fieldset",
+      "importPath": "carbon-react/lib/components/fieldset",
+      "exports": [
+        {
+          "name": "Fieldset",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "file-input",
+      "importPath": "carbon-react/lib/components/file-input",
+      "exports": [
+        {
+          "name": "FileInput",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "flat-table",
+      "importPath": "carbon-react/lib/components/flat-table",
+      "exports": [
+        {
+          "name": "FlatTable",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableHead",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableHeader",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableBody",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableRow",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableRowHeader",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableCell",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableCheckbox",
+          "isDefault": false
+        },
+        {
+          "name": "FlatTableBodyDraggable",
+          "isDefault": false
+        },
+        {
+          "name": "Sort",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "form",
+      "importPath": "carbon-react/lib/components/form",
+      "exports": [
+        {
+          "name": "Form",
+          "isDefault": true
+        },
+        {
+          "name": "RequiredFieldsIndicator",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "global-header",
+      "importPath": "carbon-react/lib/components/global-header",
+      "exports": [
+        {
+          "name": "GlobalHeader",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "grid",
+      "importPath": "carbon-react/lib/components/grid",
+      "exports": [
+        {
+          "name": "GridContainer",
+          "isDefault": false,
+          "deprecated": "`GridContainer` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "GridItem",
+          "isDefault": false,
+          "deprecated": "`GridItem` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "grouped-character",
+      "importPath": "carbon-react/lib/components/grouped-character",
+      "exports": [
+        {
+          "name": "GroupedCharacter",
+          "isDefault": true,
+          "deprecated": "`GroupedCharacter` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "heading",
+      "importPath": "carbon-react/lib/components/heading",
+      "exports": [
+        {
+          "name": "Heading",
+          "isDefault": true,
+          "deprecated": "`Heading` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "help",
+      "importPath": "carbon-react/lib/components/help",
+      "exports": [
+        {
+          "name": "Help",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "hr",
+      "importPath": "carbon-react/lib/components/hr",
+      "exports": [
+        {
+          "name": "Hr",
+          "isDefault": true,
+          "deprecated": "`Hr` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "i18n-provider",
+      "importPath": "carbon-react/lib/components/i18n-provider",
+      "exports": [
+        {
+          "name": "I18nProvider",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "icon",
+      "importPath": "carbon-react/lib/components/icon",
+      "exports": [
+        {
+          "name": "Icon",
+          "isDefault": true
+        },
+        {
+          "name": "ICON_COLOR_TYPES",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "icon-button",
+      "importPath": "carbon-react/lib/components/icon-button",
+      "exports": [
+        {
+          "name": "IconButton",
+          "isDefault": true,
+          "deprecated": "`IconButton` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "image",
+      "importPath": "carbon-react/lib/components/image",
+      "exports": [
+        {
+          "name": "Image",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "inline-inputs",
+      "importPath": "carbon-react/lib/components/inline-inputs",
+      "exports": [
+        {
+          "name": "InlineInputs",
+          "isDefault": true,
+          "deprecated": "`InlineInputs` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "link",
+      "importPath": "carbon-react/lib/components/link",
+      "exports": [
+        {
+          "name": "Link",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "link-preview",
+      "importPath": "carbon-react/lib/components/link-preview",
+      "exports": [
+        {
+          "name": "LinkPreview",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "loader",
+      "importPath": "carbon-react/lib/components/loader",
+      "exports": [
+        {
+          "name": "Loader",
+          "isDefault": true,
+          "deprecated": "`Loader` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "loader",
+      "importPath": "carbon-react/lib/components/loader/__next__",
+      "next": true,
+      "exports": [
+        {
+          "name": "Loader",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "loader-bar",
+      "importPath": "carbon-react/lib/components/loader-bar",
+      "exports": [
+        {
+          "name": "LoaderBar",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "loader-spinner",
+      "importPath": "carbon-react/lib/components/loader-spinner",
+      "exports": [
+        {
+          "name": "LoaderSpinner",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "loader-star",
+      "importPath": "carbon-react/lib/components/loader-star",
+      "exports": [
+        {
+          "name": "LoaderStar",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "menu",
+      "importPath": "carbon-react/lib/components/menu",
+      "exports": [
+        {
+          "name": "Menu",
+          "isDefault": false
+        },
+        {
+          "name": "MenuItem",
+          "isDefault": false
+        },
+        {
+          "name": "MenuDivider",
+          "isDefault": false
+        },
+        {
+          "name": "MenuSegmentTitle",
+          "isDefault": false
+        },
+        {
+          "name": "MenuFullscreen",
+          "isDefault": false
+        },
+        {
+          "name": "ScrollableBlock",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "message",
+      "importPath": "carbon-react/lib/components/message",
+      "exports": [
+        {
+          "name": "Message",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "modal",
+      "importPath": "carbon-react/lib/components/modal",
+      "exports": [
+        {
+          "name": "Modal",
+          "isDefault": true,
+          "deprecated": "`Modal` is deprecated. Please use `Dialog` instead."
+        }
+      ]
+    },
+    {
+      "folder": "multi-action-button",
+      "importPath": "carbon-react/lib/components/multi-action-button",
+      "exports": [
+        {
+          "name": "MultiActionButton",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "navigation-bar",
+      "importPath": "carbon-react/lib/components/navigation-bar",
+      "exports": [
+        {
+          "name": "NavigationBar",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "note",
+      "importPath": "carbon-react/lib/components/note",
+      "exports": [
+        {
+          "name": "Note",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "number",
+      "importPath": "carbon-react/lib/components/number",
+      "exports": [
+        {
+          "name": "Number",
+          "isDefault": true,
+          "deprecated": "`Number` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "numeral-date",
+      "importPath": "carbon-react/lib/components/numeral-date",
+      "exports": [
+        {
+          "name": "NumeralDate",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "option-tile",
+      "importPath": "carbon-react/lib/components/option-tile",
+      "exports": [
+        {
+          "name": "OptionTile",
+          "isDefault": false
+        },
+        {
+          "name": "OptionTileGroup",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "pager",
+      "importPath": "carbon-react/lib/components/pager",
+      "exports": [
+        {
+          "name": "Pagination",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "pages",
+      "importPath": "carbon-react/lib/components/pages",
+      "exports": [
+        {
+          "name": "Pages",
+          "isDefault": true,
+          "deprecated": "`Pages` has been deprecated. See the Carbon documentation for migration details."
+        },
+        {
+          "name": "Page",
+          "isDefault": false,
+          "deprecated": "`Page` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "password",
+      "importPath": "carbon-react/lib/components/password",
+      "exports": [
+        {
+          "name": "Password",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "pill",
+      "importPath": "carbon-react/lib/components/pill",
+      "exports": [
+        {
+          "name": "Pill",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "pod",
+      "importPath": "carbon-react/lib/components/pod",
+      "exports": [
+        {
+          "name": "Pod",
+          "isDefault": true,
+          "deprecated": "`Pod` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "popover-container",
+      "importPath": "carbon-react/lib/components/popover-container",
+      "exports": [
+        {
+          "name": "PopoverContainer",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "portal",
+      "importPath": "carbon-react/lib/components/portal",
+      "exports": [
+        {
+          "name": "Portal",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "portrait",
+      "importPath": "carbon-react/lib/components/portrait",
+      "exports": [
+        {
+          "name": "Portrait",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "preview",
+      "importPath": "carbon-react/lib/components/preview",
+      "exports": [
+        {
+          "name": "Preview",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "profile",
+      "importPath": "carbon-react/lib/components/profile",
+      "exports": [
+        {
+          "name": "Profile",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "progress-tracker",
+      "importPath": "carbon-react/lib/components/progress-tracker",
+      "exports": [
+        {
+          "name": "ProgressTracker",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "radio-button",
+      "importPath": "carbon-react/lib/components/radio-button",
+      "exports": [
+        {
+          "name": "RadioButton",
+          "isDefault": false
+        },
+        {
+          "name": "RadioButtonGroup",
+          "isDefault": false
+        },
+        {
+          "name": "RadioButton",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "search",
+      "importPath": "carbon-react/lib/components/search",
+      "exports": [
+        {
+          "name": "Search",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "select",
+      "importPath": "carbon-react/lib/components/select",
+      "exports": [
+        {
+          "name": "Option",
+          "isDefault": false
+        },
+        {
+          "name": "OptionRow",
+          "isDefault": false
+        },
+        {
+          "name": "OptionGroupHeader",
+          "isDefault": false
+        },
+        {
+          "name": "Select",
+          "isDefault": false
+        },
+        {
+          "name": "FilterableSelect",
+          "isDefault": false
+        },
+        {
+          "name": "MultiSelect",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "settings-row",
+      "importPath": "carbon-react/lib/components/settings-row",
+      "exports": [
+        {
+          "name": "SettingsRow",
+          "isDefault": true,
+          "deprecated": "`SettingsRow` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "sidebar",
+      "importPath": "carbon-react/lib/components/sidebar",
+      "exports": [
+        {
+          "name": "Sidebar",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "simple-color-picker",
+      "importPath": "carbon-react/lib/components/simple-color-picker",
+      "exports": [
+        {
+          "name": "SimpleColorPicker",
+          "isDefault": false
+        },
+        {
+          "name": "SimpleColor",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "split-button",
+      "importPath": "carbon-react/lib/components/split-button",
+      "exports": [
+        {
+          "name": "SplitButton",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "step-flow",
+      "importPath": "carbon-react/lib/components/step-flow",
+      "exports": [
+        {
+          "name": "StepFlow",
+          "isDefault": false
+        },
+        {
+          "name": "StepFlowTitle",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "step-sequence",
+      "importPath": "carbon-react/lib/components/step-sequence",
+      "exports": [
+        {
+          "name": "StepSequence",
+          "isDefault": false
+        },
+        {
+          "name": "StepSequenceItem",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "switch",
+      "importPath": "carbon-react/lib/components/switch",
+      "exports": [
+        {
+          "name": "SwitchComponent",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "tabs",
+      "importPath": "carbon-react/lib/components/tabs",
+      "exports": [
+        {
+          "name": "Tabs",
+          "isDefault": false
+        },
+        {
+          "name": "Tab",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "tabs",
+      "importPath": "carbon-react/lib/components/tabs/__next__",
+      "next": true,
+      "exports": [
+        {
+          "name": "Tabs",
+          "isDefault": false
+        },
+        {
+          "name": "Tab",
+          "isDefault": false
+        },
+        {
+          "name": "TabList",
+          "isDefault": false
+        },
+        {
+          "name": "TabPanel",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "text-editor",
+      "importPath": "carbon-react/lib/components/text-editor",
+      "exports": [
+        {
+          "name": "TextEditor",
+          "isDefault": true
+        },
+        {
+          "name": "MentionsPlugin",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "textarea",
+      "importPath": "carbon-react/lib/components/textarea",
+      "exports": [
+        {
+          "name": "Textarea",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "textbox",
+      "importPath": "carbon-react/lib/components/textbox",
+      "exports": [
+        {
+          "name": "Textbox",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "tile",
+      "importPath": "carbon-react/lib/components/tile",
+      "exports": [
+        {
+          "name": "Tile",
+          "isDefault": false
+        },
+        {
+          "name": "TileContent",
+          "isDefault": false
+        },
+        {
+          "name": "TileFooter",
+          "isDefault": false
+        },
+        {
+          "name": "TileHeader",
+          "isDefault": false
+        },
+        {
+          "name": "FlexTileContainer",
+          "isDefault": false
+        },
+        {
+          "name": "FlexTileCell",
+          "isDefault": false
+        },
+        {
+          "name": "FlexTileDivider",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "tile-select",
+      "importPath": "carbon-react/lib/components/tile-select",
+      "exports": [
+        {
+          "name": "TileSelect",
+          "isDefault": false
+        },
+        {
+          "name": "TileSelectGroup",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "time",
+      "importPath": "carbon-react/lib/components/time",
+      "exports": [
+        {
+          "name": "Time",
+          "isDefault": false
+        }
+      ]
+    },
+    {
+      "folder": "toast",
+      "importPath": "carbon-react/lib/components/toast",
+      "exports": [
+        {
+          "name": "Toast",
+          "isDefault": true,
+          "deprecated": "`Toast` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "tokens-wrapper",
+      "importPath": "carbon-react/lib/components/tokens-wrapper",
+      "exports": [
+        {
+          "name": "TokensWrapper",
+          "isDefault": true
+        }
+      ]
+    },
+    {
+      "folder": "tooltip",
+      "importPath": "carbon-react/lib/components/tooltip",
+      "exports": [
+        {
+          "name": "Tooltip",
+          "isDefault": true,
+          "deprecated": "`Tooltip` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "typography",
+      "importPath": "carbon-react/lib/components/typography",
+      "exports": [
+        {
+          "name": "Typography",
+          "isDefault": true
+        },
+        {
+          "name": "List",
+          "isDefault": false,
+          "deprecated": "The List component is part of the legacy Typography system and will be removed in a future release. Use the Typography component with `variant=\"ul\"` or `variant=\"ol\"` instead, or use proper semantic HTML list elements (ul, ol, li) with Typography components inside. Example migration: ```tsx // Before <List> <ListItem>Item 1</ListItem> <ListItem>Item 2</ListItem> </List> // After (using Typography list variants) <Typography variant=\"ul\"> <Typography as=\"li\">Item 1</Typography> <Typography as=\"li\">Item 2</Typography> </Typography> // After (using native HTML with Typography) <ul> <li><Typography>Item 1</Typography></li> <li><Typography>Item 2</Typography></li> </ul> ```"
+        },
+        {
+          "name": "ListItem",
+          "isDefault": false,
+          "deprecated": "The ListItem component is part of the legacy Typography system and will be removed in a future release. Use Typography with `as=\"li\"` instead, or use semantic HTML li elements with Typography components inside. You can use the `as` prop on Typography to inherit list styling while using Typography's text styling capabilities."
+        }
+      ]
+    },
+    {
+      "folder": "vertical-divider",
+      "importPath": "carbon-react/lib/components/vertical-divider",
+      "exports": [
+        {
+          "name": "VerticalDivider",
+          "isDefault": true,
+          "deprecated": "`VerticalDivider` has been deprecated. See the Carbon documentation for migration details."
+        }
+      ]
+    },
+    {
+      "folder": "vertical-menu",
+      "importPath": "carbon-react/lib/components/vertical-menu",
+      "exports": [
+        {
+          "name": "VerticalMenu",
+          "isDefault": false
+        },
+        {
+          "name": "VerticalMenuItem",
+          "isDefault": false
+        },
+        {
+          "name": "VerticalMenuFullScreen",
+          "isDefault": false
+        },
+        {
+          "name": "VerticalMenuTrigger",
+          "isDefault": false
+        },
+        {
+          "name": "ResponsiveVerticalMenu",
+          "isDefault": false
+        },
+        {
+          "name": "ResponsiveVerticalMenuDivider",
+          "isDefault": false
+        },
+        {
+          "name": "ResponsiveVerticalMenuItem",
+          "isDefault": false
+        },
+        {
+          "name": "ResponsiveVerticalMenuProvider",
+          "isDefault": false
+        }
+      ]
+    }
+  ]
+}

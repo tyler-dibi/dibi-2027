@@ -1,0 +1,17 @@
+---
+description: Carbon by Sage is the only design system allowed in this repo
+alwaysApply: true
+---
+
+# Carbon by Sage only
+
+This repo is a tool for designing with **Carbon by Sage** (`carbon-react`, https://carbon.sage.com/) and nothing else.
+Read `AGENTS.md` for the full rules. In short:
+
+- Import UI only from `carbon-react/lib/components/<folder>` (deep paths; there is no root entry).
+- Never use Carbon by IBM (`@carbon/*`), MUI, Tailwind, or any other UI library, and never add UI dependencies.
+- No raw HTML elements, no `style`/`className`, no styled-components, no CSS files. Use `Box`, `Typography` and component props.
+- No deprecated components or props. Prefer `__next__` entry points (Button, Loader, Tabs).
+  Check `docs/carbon-components.md` for import statements and status, and the component's `.d.ts` for props.
+- If a request can't be met with Carbon components, say so and propose the closest Carbon pattern instead of working around it.
+- Finish by running `npm run check`; it must pass with no errors or warnings.

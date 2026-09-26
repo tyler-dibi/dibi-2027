@@ -1,0 +1,15 @@
+{
+  "event": "DIBI 2027",
+  "teams": 14,
+  "cloudflareProject": "REPLACE with your Cloudflare Pages project name, e.g. carbon-playground",
+  "repo": "tyler-dibi/dibi-2027",
+  "cursorEmail": "REPLACE with the shared Cursor login email",
+  "cursorPassword": "REPLACE with the shared Cursor password",
+  "loginNote": "",
+  "prompts": [
+    "Read our brief and build a first version of it in the {team} playground.",
+    "Add a Dialog with a short form so people can create a new item.",
+    "Put three summary Tiles at the top and a table of results underneath.",
+    "Which Carbon components would work best for this screen? Suggest a layout, then build it."
+  ]
+}
