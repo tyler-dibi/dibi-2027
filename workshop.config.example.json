@@ -6,6 +6,8 @@
   "cursorEmail": "REPLACE with the shared Cursor login email",
   "cursorPassword": "REPLACE with the shared Cursor password",
   "loginNote": "",
+  "siteUsername": "REPLACE with the site login username (SITE_USERNAME in Cloudflare)",
+  "sitePassword": "REPLACE with the site login password (SITE_PASSWORD in Cloudflare)",
   "prompts": [
     "Read our brief and build a first version of it in the {team} playground.",
     "Add a Dialog with a short form so people can create a new item.",

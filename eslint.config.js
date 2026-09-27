@@ -137,7 +137,7 @@ const noCustomStyling = {
 };
 
 export default tseslint.config(
-  { ignores: ["dist", "node_modules", "scripts", "*.config.*"] },
+  { ignores: ["dist", "node_modules", "scripts", "functions", "*.config.*"] },
 
   {
     files: ["src/**/*.{ts,tsx}"],

@@ -20,7 +20,16 @@ if (!existsSync(configPath)) {
 }
 
 const config = JSON.parse(readFileSync(configPath, "utf8"));
-const required = ["event", "teams", "cloudflareProject", "repo", "cursorEmail", "cursorPassword"];
+const required = [
+  "event",
+  "teams",
+  "cloudflareProject",
+  "repo",
+  "cursorEmail",
+  "cursorPassword",
+  "siteUsername",
+  "sitePassword",
+];
 const missing = required.filter((key) => !config[key] || String(config[key]).startsWith("REPLACE"));
 if (missing.length) {
   console.error(`Fill in these fields in workshop.config.json: ${missing.join(", ")}`);
@@ -75,6 +84,11 @@ const card = (n) => {
         <img src="${qr(url)}" alt="QR code for ${escape(url)}" />
         <h2>Your live prototype</h2>
         <p class="url">${escape(url)}</p>
+        ${
+          config.siteUsername
+            ? `<p class="note">Log in with <strong>${escape(config.siteUsername)}</strong> / <strong>${escape(config.sitePassword)}</strong></p>`
+            : ""
+        }
         <p class="note">Updates about a minute after each change. Share it, or present from it.</p>
       </aside>
     </div>

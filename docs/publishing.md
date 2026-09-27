@@ -56,11 +56,18 @@ If the repo has to stay private, `.github/workflows/protect-main.yml` is a free 
 `main` by anyone other than you, within about a minute. It needs **Settings > Actions > General > Workflow
 permissions > Read and write permissions**. Once the ruleset is active, you can delete that workflow.
 
-## 4. Optional: require sign-in to view prototypes
+## 4. Site login
 
-Branch URLs are public by default. To require a sign-in (free for up to 50 people), go to the Pages project in
-Cloudflare and choose **Settings > General > Enable access policy**, then choose who's allowed in
-**Zero Trust > Access > Applications**. For a public workshop this usually isn't needed.
+Every published URL asks for a username and password the first time it's opened (the browser's own login box).
+After that, the browser remembers it for 30 days, across `main` and every branch URL. This is handled by
+`functions/_middleware.js`, which Cloudflare runs in front of the site.
+
+Set the login in Cloudflare: **Workers & Pages > carbon-playground > Settings > Variables and Secrets**. Add
+`SITE_USERNAME` and `SITE_PASSWORD` as **Secret** values for **both** Production and Preview, then redeploy.
+Until they're set, the site shows "The site login hasn't been set up yet".
+
+Changing the password logs everyone out. The login is a shared password, not per-person accounts. It keeps
+casual visitors out but isn't suited to confidential work.
 
 ## Workshop checklist
 
