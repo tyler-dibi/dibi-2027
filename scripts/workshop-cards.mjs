@@ -89,7 +89,7 @@ const card = (n) => {
         <p class="url">${escape(url)}</p>
         ${
           config.siteUsername
-            ? `<p class="note">Log in with <strong>${escape(config.siteUsername)}</strong> / <strong>${escape(config.sitePassword)}</strong></p>`
+            ? `<p class="note">Username: <strong>${escape(config.siteUsername)}</strong><br>Password: <strong>${escape(config.sitePassword)}</strong></p>`
             : ""
         }
         <p class="note">Updates about a minute after each change. Share it, or present from it.</p>

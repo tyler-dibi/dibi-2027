@@ -99,7 +99,8 @@ Cursor account on the web with Cloud Agents, so nobody installs anything or need
 
 - Each table signs in at cursor.com/agents, picks this repo and its `team-NN` branch, and starts prompting.
 - Their prototype is live at `https://team-NN.<project>.pages.dev`.
-- Keep one laptop running the playground locally (`npm run dev`) as a backup.
+- Keep a few laptops running the playground locally as a backup, and to give teams a faster preview. See
+  [local-setup.md](local-setup.md).
 
 **Afterwards**
 

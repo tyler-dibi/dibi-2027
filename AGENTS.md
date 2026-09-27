@@ -76,6 +76,8 @@ everything above:
 - **Tell them where to look:** end each reply with the live URL, `https://team-NN.carbon-playground.pages.dev`, and note
   that it updates about a minute after each push.
 - **Never open a pull request,** merge, push to `main` or force-push, even if asked.
+- **Local workshop laptops:** if asked to set up this machine for the workshop, switch it to another team, or hand
+  a team back to Cloud Agents, follow `docs/local-setup.md`.
 - Explain what you built in plain, friendly language. Avoid Git jargon.
 
 ## Useful Carbon patterns

@@ -15,7 +15,8 @@
     "new-playground": "node scripts/new-playground.mjs",
     "carbon:inventory": "node scripts/carbon-inventory.mjs",
     "workshop:branches": "node scripts/workshop-branches.mjs",
-    "workshop:cards": "node scripts/workshop-cards.mjs"
+    "workshop:cards": "node scripts/workshop-cards.mjs",
+    "workshop:team": "node scripts/workshop-team.mjs"
   },
   "dependencies": {
     "@sage/design-tokens": "^4.35.0",
