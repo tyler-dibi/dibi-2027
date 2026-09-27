@@ -51,7 +51,7 @@ This repo is a design-in-the-browser tool. Designers describe screens and the ag
 
 ## Publishing
 
-- Every branch is published automatically to `https://<branch>.<project>.pages.dev` when it's pushed. To publish,
+- Every branch is published automatically to `https://<branch>.carbon-playground.pages.dev` when it's pushed. To publish,
   run `npm run check`, commit, then `git push` (use `git push -u origin <branch>` the first time).
 - **Never commit to, merge into, or open pull requests against `main`** unless the repo owner explicitly asks for a
   change to the tool itself. It's the blank template, and other people's changes to it are undone automatically.
@@ -73,7 +73,7 @@ everything above:
 - **Publish after every change:** run `npm run check`, commit with a short message, then push to the team branch
   with `git push origin HEAD:team-NN`. If the push is rejected because the branch has moved on, run
   `git pull --rebase origin team-NN` and push again.
-- **Tell them where to look:** end each reply with the live URL, `https://team-NN.<project>.pages.dev`, and note
+- **Tell them where to look:** end each reply with the live URL, `https://team-NN.carbon-playground.pages.dev`, and note
   that it updates about a minute after each push.
 - **Never open a pull request,** merge, push to `main` or force-push, even if asked.
 - Explain what you built in plain, friendly language. Avoid Git jargon.

@@ -30,7 +30,7 @@ git add -A && git commit -m "Invoice list prototype"
 git push -u origin tyler-invoices           # first push; afterwards just `git push`
 ```
 
-About a minute later it's live at `https://tyler-invoices.<project>.pages.dev`.
+About a minute later it's live at `https://tyler-invoices.carbon-playground.pages.dev`.
 The app header shows which branch you're looking at.
 
 - **Keep branch names short and lowercase**, e.g. `tyler-invoices`. Only the first 28 characters appear in the URL.
