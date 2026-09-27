@@ -1,7 +1,7 @@
 {
   "event": "DIBI 2027",
   "teams": 14,
-  "cloudflareProject": "REPLACE with your Cloudflare Pages project name, e.g. carbon-playground",
+  "cloudflareProject": "carbon-playground",
   "repo": "tyler-dibi/dibi-2027",
   "cursorEmail": "REPLACE with the shared Cursor login email",
   "cursorPassword": "REPLACE with the shared Cursor password",

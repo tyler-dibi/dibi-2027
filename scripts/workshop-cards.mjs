@@ -42,6 +42,8 @@ const escape = (value) =>
 // QR codes are drawn by a free public service when the page loads, so print while online.
 const qr = (url) => `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=0&data=${encodeURIComponent(url)}`;
 
+const guideUrl = `${config.cloudflareProject}.pages.dev/workshop`;
+
 const card = (n) => {
   const team = String(n).padStart(2, "0");
   const branch = `team-${team}`;
@@ -72,6 +74,7 @@ const card = (n) => {
         <li>
           <h2>Pick your project</h2>
           <p>Choose the repo <strong>${escape(config.repo)}</strong> and the branch <strong>${branch}</strong>.</p>
+          <p class="note">Can't find it? Start your prompt with “We're Team ${team}” and the agent will use the right branch.</p>
         </li>
         <li>
           <h2>Describe what you want</h2>
@@ -93,7 +96,10 @@ const card = (n) => {
       </aside>
     </div>
 
-    <footer>Only Carbon by Sage components. If something isn't possible, the agent suggests the closest Carbon pattern.</footer>
+    <footer>
+      <span>Session plan, team roles and help: <strong>${escape(guideUrl)}</strong></span>
+      <span>Stuck? Put your hand up and we'll come to your table.</span>
+    </footer>
   </section>`;
 };
 
@@ -139,7 +145,7 @@ const html = `<!doctype html>
   .live img { width: 38mm; height: 38mm; margin-bottom: 3mm; }
   .url { font-family: ui-monospace, Menlo, monospace; font-size: 8.5pt; font-weight: 700; word-break: break-all; }
   .note { font-size: 8pt; color: #335b70; }
-  footer { font-size: 8pt; color: #335b70; }
+  footer { font-size: 8pt; color: #335b70; display: flex; justify-content: space-between; gap: 6mm; }
   .hint { max-width: 210mm; margin: 6mm auto; font-size: 10pt; }
 </style>
 </head>
