@@ -63,7 +63,18 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: |
           set -o pipefail
-          npx --yes wrangler@4 pages deploy dist --project-name="$PROJECT" --branch="$BRANCH" --commit-dirty=true 2>&1 | tee deploy.log
+          # Cloudflare sometimes rejects uploads with "Unknown internal error" when many branches publish at once.
+          for attempt in 1 2 3; do
+            if npx --yes wrangler@4 pages deploy dist --project-name="$PROJECT" --branch="$BRANCH" --commit-dirty=true 2>&1 | tee deploy.log; then
+              break
+            fi
+            if [ "$attempt" = 3 ]; then
+              echo "::error::Cloudflare rejected the upload 3 times. Re-run this job, or push again."
+              exit 1
+            fi
+            echo "::warning::Upload attempt $attempt failed; trying again in $((attempt * 20)) seconds."
+            sleep $((attempt * 20))
+          done
           if [ "$BRANCH" = "main" ]; then
             url="https://$PROJECT.pages.dev"
           else
