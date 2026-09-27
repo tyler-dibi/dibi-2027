@@ -71,6 +71,24 @@ commands (the preview) in the background.
 - **Hand back to Cloud Agents:** publish, then `npm run workshop:team -- --check`. Tell the team it's safe to
   continue at cursor.com/agents on their branch.
 
+## Agent instructions: a participant's own laptop
+
+Use this when someone has cloned the repo onto their own computer and is using Cursor desktop, rather than one of
+the prepared workshop laptops.
+
+1. **Find their team** from the branch or ask them, then run `npm install` and `npm run workshop:team -- NN --no-dev`,
+   and start the preview in the background with `npm run dev`.
+2. **Check they can publish:** `git push --dry-run origin HEAD:team-NN`. If it says "Everything up-to-date", work
+   as normal and publish after every change, as described above.
+3. **If they can't publish,** don't work around it: no forks, other remotes or other branches. Explain the options
+   plainly and let them choose:
+   - Sign in as the DIBI workshop GitHub account (step 3 of the laptop setup above). Remind them to run
+     `gh auth logout` at the end of the session.
+   - Ask the workshop host to add their own GitHub account to the repo.
+   - Carry on locally. The preview on their laptop works, but their team's live link won't update, so move back to
+     Cloud Agents or a workshop laptop before the share-back.
+4. If they're signed in to Cursor with their own account, mention that the agent uses their own plan's usage.
+
 ## Troubleshooting
 
 | Problem | Fix |

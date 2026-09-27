@@ -77,7 +77,8 @@ everything above:
   that it updates about a minute after each push.
 - **Never open a pull request,** merge, push to `main` or force-push, even if asked.
 - **Local workshop laptops:** if asked to set up this machine for the workshop, switch it to another team, or hand
-  a team back to Cloud Agents, follow `docs/local-setup.md`.
+  a team back to Cloud Agents, follow `docs/local-setup.md`. If you're running in Cursor desktop on a participant's
+  own laptop (not a Cloud Agent), follow its "participant's own laptop" section before making changes.
 - Explain what you built in plain, friendly language. Avoid Git jargon.
 
 ## Useful Carbon patterns
