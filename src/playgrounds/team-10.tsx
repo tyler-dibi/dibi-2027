@@ -1,12 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Box from "carbon-react/lib/components/box";
 import Button from "carbon-react/lib/components/button/__next__";
+import { ButtonToggle, ButtonToggleGroup } from "carbon-react/lib/components/button-toggle";
 import Divider from "carbon-react/lib/components/divider";
+import {
+  FlatTable,
+  FlatTableBody,
+  FlatTableCell,
+  FlatTableHead,
+  FlatTableHeader,
+  FlatTableRow,
+  FlatTableRowHeader,
+} from "carbon-react/lib/components/flat-table";
 import Icon from "carbon-react/lib/components/icon";
 import Loader from "carbon-react/lib/components/loader/__next__";
 import Message from "carbon-react/lib/components/message";
 import Pill from "carbon-react/lib/components/pill";
+import Pagination from "carbon-react/lib/components/pager";
 import Portrait from "carbon-react/lib/components/portrait";
 import ProgressTracker from "carbon-react/lib/components/progress-tracker";
 import Search from "carbon-react/lib/components/search";
@@ -46,14 +57,12 @@ type Phase =
   | { name: "lookup"; prompt: string };
 
 const DOOR = "Door A";
-const TARGET = 300;
-const START_COUNT = 186;
 const OPEN_MINUTE = 8 * 60;
 const START_MINUTE = 9 * 60 + 15;
 const KEYNOTE_MINUTE = 10 * 60 + 30;
 const SUCCESS_HOLD_SECONDS = 8;
 const LIST_SAVED_AT = "07:45";
-const STORAGE_KEY = "team-10-door-a";
+const STORAGE_KEY = "team-10-door-a-v2";
 
 type DoorSnapshot = {
   attendees: Attendee[];
@@ -73,7 +82,7 @@ const TICKET_VARIANT = {
   "Thursday workshop": "orange",
 } as const;
 
-const ATTENDEES: Attendee[] = [
+const NAMED: Attendee[] = [
   { id: "priya", name: "Priya Shah", initials: "PS", company: "Northwind Digital", ticket: "Full conference", order: "SS-10482", checkedIn: false },
   { id: "elena", name: "Elena Rossi", initials: "ER", company: "Rossi & Co", ticket: "Speaker", order: "SS-10014", checkedIn: false, hint: "Speaker. The green room is behind Hall 1." },
   { id: "james", name: "James Okonkwo", initials: "JO", company: "Harbour & Co", ticket: "Full conference", order: "SS-10220", checkedIn: true, checkedInAt: "08:12", door: "Door B" },
@@ -139,6 +148,85 @@ function formatTime(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
   return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+}
+
+const FIRST_NAMES = [
+  "Amelia", "Arthur", "Aisha", "Benjamin", "Chloe", "Daniel", "Emily", "Farah", "George", "Harriet",
+  "Ibrahim", "Isla", "Jack", "Jasmin", "Leo", "Maya", "Nathan", "Olivia", "Patrick", "Quinn",
+  "Rosa", "Samuel", "Tara", "Usman", "Violet", "William", "Yasmin", "Zara", "Alice", "Callum",
+  "Deepa", "Edward", "Freya", "Hugo", "Imogen", "Jacob", "Keira", "Louis", "Nadia", "Oscar",
+];
+
+const LAST_NAMES = [
+  "Hughes", "Wright", "Thompson", "Evans", "Walker", "Green", "Hall", "Clarke", "Morris", "Wood",
+  "Bell", "Murphy", "Bailey", "Cooper", "Richardson", "Cox", "Ward", "Foster", "Russell", "Griffin",
+  "Hayes", "Bryant", "Shaw", "Armstrong", "Hunt", "Stone", "Fox", "Palmer", "Webb", "Bennett",
+];
+
+const COMPANIES = [
+  "Northgate Studio", "Harbour Books", "Fieldwork Ltd", "Brightpath", "Oak & Co", "Lumen Health",
+  "Pemberley Design", "Redkite Analytics", "Willow Goods", "Kindred Labs", "Marble Row", "Sable Finance",
+];
+
+const CROWD_TICKETS: Ticket[] = ["Full conference", "Full conference", "Full conference", "Workshop day", "Exhibitor"];
+
+function buildExpected(named: Attendee[]): Attendee[] {
+  const taken = new Set(named.map((person) => person.name));
+  const namedIn = named.filter((person) => person.checkedIn).length;
+  const extrasIn = 186 - namedIn;
+  const extras: Attendee[] = [];
+  let seed = 0;
+
+  while (extras.length < 300 - named.length) {
+    const first = FIRST_NAMES[seed % FIRST_NAMES.length];
+    const last = LAST_NAMES[Math.floor(seed / FIRST_NAMES.length) % LAST_NAMES.length];
+    seed += 1;
+    const name = `${first} ${last}`;
+    if (taken.has(name)) continue;
+    taken.add(name);
+    const arrived = extras.length < extrasIn;
+    const index = extras.length + 1;
+    extras.push({
+      id: `guest-${String(index).padStart(3, "0")}`,
+      name,
+      initials: `${first.charAt(0)}${last.charAt(0)}`,
+      company: COMPANIES[index % COMPANIES.length],
+      ticket: CROWD_TICKETS[index % CROWD_TICKETS.length],
+      order: `SS-${11000 + index}`,
+      checkedIn: arrived,
+      checkedInAt: arrived ? formatTime(OPEN_MINUTE + (index % 70)) : undefined,
+      door: arrived ? (index % 7 === 0 ? "Door B" : DOOR) : undefined,
+    });
+  }
+
+  return [...named, ...extras].sort((a, b) => a.name.localeCompare(b.name, "en-GB"));
+}
+
+const ATTENDEES = buildExpected(NAMED);
+const START_COUNT = ATTENDEES.filter((person) => person.checkedIn).length;
+const TARGET = ATTENDEES.length;
+
+type ListFilter = "all" | "in" | "waiting" | "decision";
+
+function listStatus(person: Attendee): { label: string; detail: string; variant: "green" | "red" | "orange" | "grey" } {
+  if (person.checkedIn) {
+    const when = person.checkedInAt ? `at ${person.checkedInAt}` : "today";
+    const where = person.door ?? DOOR;
+    const flag = person.balance ? ` ${person.balance} is still due.` : person.wrongDay ? " Thursday pass, let in today." : "";
+    return { label: "Checked in", detail: `Checked in ${when}, ${where}.${flag}`, variant: "green" };
+  }
+  if (person.balance) return { label: "Payment due", detail: `${person.balance} still to pay. Not checked in.`, variant: "red" };
+  if (person.wrongDay) return { label: "Not valid today", detail: "Thursday workshop pass. Not checked in.", variant: "orange" };
+  return { label: "Not arrived", detail: "Expected today. Not checked in.", variant: "grey" };
+}
+
+function matchesListFilter(person: Attendee, filter: ListFilter) {
+  const waiting = !person.checkedIn && !person.balance && !person.wrongDay;
+  const decision = !person.checkedIn && (Boolean(person.balance) || Boolean(person.wrongDay));
+  if (filter === "in") return person.checkedIn;
+  if (filter === "waiting") return waiting;
+  if (filter === "decision") return decision;
+  return true;
 }
 
 function needsReview(person: Attendee) {
@@ -262,6 +350,9 @@ export default function Team10Playground() {
   const [queueIndex, setQueueIndex] = useState(stored.queueIndex);
   const [pending, setPending] = useState(stored.pending);
   const [query, setQuery] = useState("");
+  const [listQuery, setListQuery] = useState("");
+  const [listFilter, setListFilter] = useState<ListFilter>("all");
+  const [listPage, setListPage] = useState(1);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [printed, setPrinted] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(SUCCESS_HOLD_SECONDS);
@@ -444,11 +535,38 @@ export default function Team10Playground() {
     setQueueIndex(0);
     setPending(START_COUNT);
     setQuery("");
+    setListQuery("");
+    setListFilter("all");
+    setListPage(1);
     setNotice(null);
     setPrinted(false);
     setSecondsLeft(SUCCESS_HOLD_SECONDS);
     setPhase({ name: "ready" });
   };
+
+  const arrivedCount = attendees.filter((person) => person.checkedIn).length;
+  const decisionCount = attendees.filter((person) => !person.checkedIn && (person.balance || person.wrongDay)).length;
+  const waitingCount = attendees.length - arrivedCount - decisionCount;
+  const listSummary = `${attendees.length} people expected today. ${arrivedCount} checked in. ${waitingCount} not arrived. ${decisionCount} need a decision before they can enter.`;
+
+  const filteredList = useMemo(() => {
+    const term = listQuery.trim().toLowerCase();
+    return attendees.filter((person) => {
+      if (!matchesListFilter(person, listFilter)) return false;
+      if (!term) return true;
+      return (
+        person.name.toLowerCase().includes(term) ||
+        person.company.toLowerCase().includes(term) ||
+        person.order.toLowerCase().includes(term) ||
+        listStatus(person).label.toLowerCase().includes(term)
+      );
+    });
+  }, [attendees, listFilter, listQuery]);
+
+  const pageSize = 20;
+  const pageCount = Math.max(1, Math.ceil(filteredList.length / pageSize));
+  const currentListPage = Math.min(listPage, pageCount);
+  const listRows = filteredList.slice((currentListPage - 1) * pageSize, currentListPage * pageSize);
 
   const latestSession = recent.find((item) => item.session);
   const activeId = phase.name === "success" || phase.name === "problem" ? phase.id : undefined;
@@ -869,6 +987,96 @@ export default function Team10Playground() {
             Run the morning again
           </Button>
         </Box>
+      </Box>
+
+      <Box display="flex" flexDirection="column" gap={2}>
+        <Typography variant="h3" m={0}>
+          Expected participants
+        </Typography>
+        <Typography id="expected-list-summary" m={0}>
+          {listSummary}
+        </Typography>
+        <ButtonToggleGroup
+          id="expected-status-filter"
+          label="Show"
+          inputHint="Filters the list below. Status is also written in each row."
+          value={listFilter}
+          onChange={(_event, value) => {
+            if (value === "all" || value === "in" || value === "waiting" || value === "decision") {
+              setListFilter(value);
+              setListPage(1);
+            }
+          }}
+        >
+          <ButtonToggle value="all">{`All, ${attendees.length}`}</ButtonToggle>
+          <ButtonToggle value="in">{`Checked in, ${arrivedCount}`}</ButtonToggle>
+          <ButtonToggle value="waiting">{`Not arrived, ${waitingCount}`}</ButtonToggle>
+          <ButtonToggle value="decision">{`Needs a decision, ${decisionCount}`}</ButtonToggle>
+        </ButtonToggleGroup>
+        <Search
+          id="expected-list-search"
+          label="Search the expected list"
+          inputHint="Name, company, order number or status"
+          aria-label="Search the expected list by name, company, order number or status"
+          value={listQuery}
+          onChange={(event) => {
+            setListQuery(event.target.value);
+            setListPage(1);
+          }}
+        />
+        {filteredList.length === 0 ? (
+          <Message variant="info" title="No one matches">
+            Try another name, or choose a different status.
+          </Message>
+        ) : (
+          <FlatTable
+            caption="Expected participants and their check-in status"
+            ariaDescribedby="expected-list-summary"
+            hasStickyHead
+            isZebra
+            size="medium"
+          >
+            <FlatTableHead>
+              <FlatTableRow>
+                <FlatTableHeader>Name</FlatTableHeader>
+                <FlatTableHeader>Company</FlatTableHeader>
+                <FlatTableHeader>Ticket</FlatTableHeader>
+                <FlatTableHeader>Order</FlatTableHeader>
+                <FlatTableHeader>Check-in status</FlatTableHeader>
+              </FlatTableRow>
+            </FlatTableHead>
+            <FlatTableBody>
+              {listRows.map((person) => {
+                const status = listStatus(person);
+                return (
+                  <FlatTableRow key={person.id}>
+                    <FlatTableRowHeader>{person.name}</FlatTableRowHeader>
+                    <FlatTableCell>{person.company}</FlatTableCell>
+                    <FlatTableCell>{person.ticket}</FlatTableCell>
+                    <FlatTableCell>{person.order}</FlatTableCell>
+                    <FlatTableCell>
+                      <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                        <Pill variant={status.variant} fill>
+                          {status.label}
+                        </Pill>
+                        <Typography m={0}>{status.detail}</Typography>
+                      </Box>
+                    </FlatTableCell>
+                  </FlatTableRow>
+                );
+              })}
+            </FlatTableBody>
+          </FlatTable>
+        )}
+        {filteredList.length > 0 && (
+          <Pagination
+            aria-label="Expected participants pages"
+            currentPage={currentListPage}
+            pageSize={pageSize}
+            totalRecords={filteredList.length}
+            onPagination={(nextPage) => setListPage(nextPage)}
+          />
+        )}
       </Box>
     </Box>
   );
