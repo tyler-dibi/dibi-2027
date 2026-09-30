@@ -58,6 +58,8 @@ export default function Team06Playground() {
   const [sent, setSent] = useState(false);
   const [printAction, setPrintAction] = useState<ActionItem | null>(null);
   const [queued, setQueued] = useState<Record<string, boolean>>({});
+  const [approved, setApproved] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const reset = () => {
     setPhase("upload");
@@ -77,6 +79,8 @@ export default function Team06Playground() {
     setSent(false);
     setPrintAction(null);
     setQueued({});
+    setApproved(false);
+    setPendingFile(null);
   };
 
   const showBrief = (next: MeetingBrief) => {
@@ -135,6 +139,19 @@ export default function Team06Playground() {
       setError("");
       return;
     }
+    if (!approved) {
+      setPendingFile(file);
+      setError("");
+      return;
+    }
+    readTranscript(file, videoName || undefined);
+  };
+
+  const onApprove = (checked: boolean) => {
+    setApproved(checked);
+    if (!checked || !pendingFile) return;
+    const file = pendingFile;
+    setPendingFile(null);
     readTranscript(file, videoName || undefined);
   };
 
@@ -216,6 +233,20 @@ export default function Team06Playground() {
               <Typography m={0}>
                 Upload a transcript, or a video and then its transcript. The summary, decisions and your actions are built from that file.
               </Typography>
+              <Message variant="warning" title="Disclaimer">
+                AI summaries are not processed until you approve them. Tick the box below before a summary, decisions or actions are created from this recording.
+              </Message>
+              <Checkbox
+                name="approve-summary"
+                label="I approve an AI summary of this recording"
+                checked={approved}
+                onChange={(event) => onApprove(event.target.checked)}
+              />
+              {pendingFile && !approved && (
+                <Message variant="info" title="Transcript held">
+                  {pendingFile.name} is waiting. Approve the summary above and it will be processed.
+                </Message>
+              )}
               {videoName && (
                 <Message variant="info" title="Video attached">
                   {videoName} is ready. Add the transcript to turn it into actions.
@@ -240,6 +271,7 @@ export default function Team06Playground() {
                 variantType="secondary"
                 fullWidth
                 iconType="play"
+                disabled={!approved}
                 onClick={() => showBrief(sampleBrief(videoName || undefined))}
               >
                 Use the Grower sample
