@@ -3,7 +3,6 @@ import { useMemo, useState, type ReactNode } from "react";
 import Box from "carbon-react/lib/components/box";
 import Button from "carbon-react/lib/components/button/__next__";
 import { ButtonToggle, ButtonToggleGroup } from "carbon-react/lib/components/button-toggle";
-import Card from "carbon-react/lib/components/card";
 import Divider from "carbon-react/lib/components/divider";
 import Icon from "carbon-react/lib/components/icon";
 import Message from "carbon-react/lib/components/message";
@@ -164,6 +163,11 @@ function TicketEmail() {
           {EVENT.venue}, {EVENT.address}
         </Typography>
       </Box>
+      <Message variant="info" title="How to check in">
+        Open this email at the door and show the code to a member of the check-in team. You do not
+        need to print it, and you do not need to say your details if the code scans. Turn your
+        screen brightness up and hold the code steady.
+      </Message>
       <Tile orientation="vertical" borderVariant="info">
         <Box display="flex" flexDirection="column" gap={1}>
           <Fact label="Attendee" value="Priya Shah" />
@@ -177,11 +181,6 @@ function TicketEmail() {
           Show this QR code when you arrive
         </Typography>
       </Box>
-      <Message variant="info" title="How to check in">
-        Open this email at the door and show the code to a member of the check-in team. You do not
-        need to print it, and you do not need to say your details if the code scans. Turn your
-        screen brightness up and hold the code steady.
-      </Message>
     </EmailFrame>
   );
 }
@@ -259,25 +258,26 @@ function ResultBanner({
 
 function PersonButton({ attendee, onOpen }: { attendee: Attendee; onOpen: (id: string) => void }) {
   return (
-    <Card
-      variant="outlined"
-      spacing="small"
-      roundness="moderate"
+    <Button
+      fullWidth
+      type="button"
+      variantType="tertiary"
+      size="small"
       onClick={() => onOpen(attendee.id)}
-      aria-label={`${attendee.name}, ${attendee.checkedIn ? "checked in" : "waiting"}`}
+      aria-label={`${attendee.name}, ${attendee.company}, ${attendee.checkedIn ? "checked in" : "waiting"}`}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
-        <Box display="flex" flexDirection="column" gap={1}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} width="100%">
+        <Box display="flex" flexDirection="column" alignItems="flex-start">
           <Typography variant="strong" m={0}>
             {attendee.name}
           </Typography>
-          <Typography variant="small" color="subtle" m={0}>
-            {attendee.company} · {attendee.ticket}
+          <Typography variant="small" m={0}>
+            {attendee.company}
           </Typography>
         </Box>
         <StatusPill checkedIn={attendee.checkedIn} />
       </Box>
-    </Card>
+    </Button>
   );
 }
 
@@ -349,6 +349,7 @@ export default function Team09Playground() {
       setFilter("all");
     } else if (next === "resolve") {
       setResolveQuery("");
+      setSelectedId(null);
     } else if (next === "manual") {
       const current = attendees.find((attendee) => attendee.id === selectedId);
       if (current) {
