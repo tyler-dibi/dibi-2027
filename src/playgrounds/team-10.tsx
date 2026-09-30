@@ -1,23 +1,780 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import Box from "carbon-react/lib/components/box";
+import Button from "carbon-react/lib/components/button/__next__";
+import Divider from "carbon-react/lib/components/divider";
+import Icon from "carbon-react/lib/components/icon";
+import Loader from "carbon-react/lib/components/loader/__next__";
+import Message from "carbon-react/lib/components/message";
+import Pill from "carbon-react/lib/components/pill";
+import Portrait from "carbon-react/lib/components/portrait";
+import ProgressTracker from "carbon-react/lib/components/progress-tracker";
+import Search from "carbon-react/lib/components/search";
+import { Tile } from "carbon-react/lib/components/tile";
 import Typography from "carbon-react/lib/components/typography";
 
 export const meta = {
-  title: "Team 10",
+  title: "Door check-in",
 };
 
-/**
- * Playground: Team 10
- *
- * Build this page ONLY with components from Carbon by Sage
- * (imports from "carbon-react/lib/components/*"). See AGENTS.md.
- */
-export default function Team10Playground() {
+type Ticket = "Full conference" | "Speaker" | "Workshop day" | "Exhibitor" | "Thursday workshop";
+
+type Attendee = {
+  id: string;
+  name: string;
+  initials: string;
+  company: string;
+  ticket: Ticket;
+  order: string;
+  checkedIn: boolean;
+  checkedInAt?: string;
+  door?: string;
+  balance?: string;
+  wrongDay?: boolean;
+  hint?: string;
+};
+
+type Recent = { id: string; name: string; time: string; note: string };
+type Held = { id?: string; name: string; where: string; time: string };
+type Notice = { variant: "info" | "success" | "warning"; title: string; body: string };
+
+type Phase =
+  | { name: "ready" }
+  | { name: "reading"; event: string }
+  | { name: "success"; id: string; time: string; flag?: string }
+  | { name: "problem"; kind: "duplicate" | "unpaid" | "unknown" | "wrong-day"; id?: string }
+  | { name: "lookup"; prompt: string };
+
+const DOOR = "Door A";
+const TARGET = 300;
+const START_COUNT = 186;
+const OPEN_MINUTE = 8 * 60;
+const START_MINUTE = 9 * 60 + 15;
+const KEYNOTE_MINUTE = 10 * 60 + 30;
+const SUCCESS_HOLD_SECONDS = 8;
+
+const TICKET_VARIANT = {
+  "Full conference": "blue",
+  Speaker: "purple",
+  "Workshop day": "teal",
+  Exhibitor: "slate",
+  "Thursday workshop": "orange",
+} as const;
+
+const ATTENDEES: Attendee[] = [
+  { id: "priya", name: "Priya Shah", initials: "PS", company: "Northwind Digital", ticket: "Full conference", order: "SS-10482", checkedIn: false },
+  { id: "elena", name: "Elena Rossi", initials: "ER", company: "Rossi & Co", ticket: "Speaker", order: "SS-10014", checkedIn: false, hint: "Speaker. The green room is behind Hall 1." },
+  { id: "james", name: "James Okonkwo", initials: "JO", company: "Harbour & Co", ticket: "Full conference", order: "SS-10220", checkedIn: true, checkedInAt: "08:12", door: "Door B" },
+  { id: "hannah", name: "Hannah Cole", initials: "HC", company: "Bright Ledger", ticket: "Full conference", order: "SS-10601", checkedIn: false },
+  { id: "amira", name: "Amira Khan", initials: "AK", company: "Khan Ceramics", ticket: "Workshop day", order: "SS-10844", checkedIn: false, balance: "£85" },
+  { id: "tom", name: "Tom Adeyemi", initials: "TA", company: "Adeyemi Studio", ticket: "Full conference", order: "SS-10330", checkedIn: false },
+  { id: "noah", name: "Noah Blake", initials: "NB", company: "Blake Freight", ticket: "Thursday workshop", order: "SS-10910", checkedIn: false, wrongDay: true },
+  { id: "leila", name: "Leila Rahman", initials: "LR", company: "Field & Fern", ticket: "Exhibitor", order: "SS-10102", checkedIn: false, hint: "Exhibitor. Stand B12 is in Hall 2." },
+  { id: "owen", name: "Owen Price", initials: "OP", company: "Price Legal", ticket: "Full conference", order: "SS-10555", checkedIn: false },
+  { id: "grace", name: "Grace Adewale", initials: "GA", company: "Adewale Health", ticket: "Full conference", order: "SS-10771", checkedIn: false },
+  { id: "ben", name: "Ben Carter", initials: "BC", company: "Carter Mills", ticket: "Full conference", order: "SS-10208", checkedIn: true, checkedInAt: "08:40", door: DOOR },
+  { id: "sofia", name: "Sofia Mensah", initials: "SM", company: "Mensah Health", ticket: "Full conference", order: "SS-10440", checkedIn: true, checkedInAt: "09:11", door: DOOR },
+  { id: "ravi", name: "Ravi Patel", initials: "RP", company: "Patel Analytics", ticket: "Speaker", order: "SS-10088", checkedIn: true, checkedInAt: "08:04", door: DOOR },
+  { id: "meera", name: "Meera Doyle", initials: "MD", company: "Doyle Studio", ticket: "Workshop day", order: "SS-10690", checkedIn: false },
+];
+
+const QUEUE = ["priya", "elena", "james", "hannah", "amira", "unknown", "noah", "tom", "leila", "owen"];
+
+const INITIAL_RECENT: Recent[] = [
+  { id: "sofia", name: "Sofia Mensah", time: "09:11", note: "Full conference" },
+  { id: "ben", name: "Ben Carter", time: "08:40", note: "Full conference" },
+  { id: "ravi", name: "Ravi Patel", time: "08:04", note: "Speaker" },
+];
+
+function formatTime(totalMinutes: number) {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+}
+
+function needsReview(person: Attendee) {
+  return person.checkedIn || Boolean(person.balance) || Boolean(person.wrongDay);
+}
+
+function statusOf(person: Attendee): { label: string; variant: "green" | "red" | "orange" | "blue" } {
+  if (person.checkedIn) return { label: "Already in", variant: "green" };
+  if (person.balance) return { label: `${person.balance} due`, variant: "red" };
+  if (person.wrongDay) return { label: "Not today", variant: "orange" };
+  return { label: "Ready", variant: "blue" };
+}
+
+function PersonLine({ person }: { person: Attendee }) {
   return (
-    <Box p={4}>
-      <Typography variant="h1">Team 10</Typography>
-      <Typography>
-        This is a blank playground. Ask the Cursor agent to start designing here.
-      </Typography>
+    <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+      <Portrait initials={person.initials} size="L" alt="" />
+      <Box display="flex" flexDirection="column" gap={1}>
+        <Typography variant="h1" m={0}>
+          {person.name}
+        </Typography>
+        <Typography variant="p" size="L" color="subtle" m={0}>
+          {person.company}
+        </Typography>
+        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+          <Pill variant={TICKET_VARIANT[person.ticket]} fill>
+            {person.ticket}
+          </Pill>
+          <Typography m={0}>{person.order}</Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+function Finder({
+  people,
+  query,
+  onQuery,
+  onPick,
+}: {
+  people: Attendee[];
+  query: string;
+  onQuery: (value: string) => void;
+  onPick: (id: string) => void;
+}) {
+  const term = query.trim().toLowerCase();
+  const matches =
+    term.length < 2
+      ? []
+      : people.filter(
+          (person) =>
+            person.name.toLowerCase().includes(term) ||
+            person.company.toLowerCase().includes(term) ||
+            person.order.toLowerCase().includes(term),
+        );
+  const visible = matches.slice(0, 4);
+
+  return (
+    <Box display="flex" flexDirection="column" gap={2}>
+      <Search
+        id="find-attendee"
+        label="Find by name or order"
+        inputHint="Surname, company or order number"
+        aria-label="Find by name or order"
+        value={query}
+        onChange={(event) => onQuery(event.target.value)}
+      />
+      {term.length >= 2 && matches.length === 0 && (
+        <Message variant="warning" title="No one on today's list">
+          Try another spelling, or send them to registration.
+        </Message>
+      )}
+      {visible.map((person) => {
+        const status = statusOf(person);
+        const action = needsReview(person) ? "Review" : "Check in";
+        return (
+          <Tile key={person.id} orientation="vertical" variant="grey" p={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} flexWrap="wrap">
+              <Box display="flex" flexDirection="column" gap={1}>
+                <Typography variant="h5" m={0}>
+                  {person.name}
+                </Typography>
+                <Typography m={0} color="subtle">
+                  {person.company} · {person.order}
+                </Typography>
+              </Box>
+              <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+                <Pill variant={status.variant} fill>
+                  {status.label}
+                </Pill>
+                <Button
+                  size="medium"
+                  variantType="primary"
+                  aria-label={`${action} ${person.name}`}
+                  onClick={() => onPick(person.id)}
+                >
+                  {action}
+                </Button>
+              </Box>
+            </Box>
+          </Tile>
+        );
+      })}
+      {matches.length > visible.length && (
+        <Typography m={0} color="subtle">
+          {matches.length - visible.length} more. Keep typing to narrow it down.
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+export default function Team10Playground() {
+  const [attendees, setAttendees] = useState(() => ATTENDEES.map((person) => ({ ...person })));
+  const [count, setCount] = useState(START_COUNT);
+  const [minute, setMinute] = useState(START_MINUTE);
+  const [recent, setRecent] = useState(() => INITIAL_RECENT.map((item) => ({ ...item })));
+  const [held, setHeld] = useState<Held[]>([]);
+  const [queueIndex, setQueueIndex] = useState(0);
+  const [query, setQuery] = useState("");
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [printed, setPrinted] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(SUCCESS_HOLD_SECONDS);
+  const [phase, setPhase] = useState<Phase>({ name: "ready" });
+
+  const attendeesRef = useRef(attendees);
+  const minuteRef = useRef(minute);
+
+  useEffect(() => {
+    attendeesRef.current = attendees;
+  }, [attendees]);
+
+  useEffect(() => {
+    minuteRef.current = minute;
+  }, [minute]);
+
+  const takeTime = useCallback(() => {
+    const time = formatTime(minuteRef.current);
+    const next = minuteRef.current + 1;
+    minuteRef.current = next;
+    setMinute(next);
+    return time;
+  }, []);
+
+  const checkIn = useCallback(
+    (id: string, flag?: string) => {
+      const person = attendeesRef.current.find((item) => item.id === id);
+      if (!person || person.checkedIn) return;
+      const time = takeTime();
+      const next = attendeesRef.current.map((item) =>
+        item.id === id ? { ...item, checkedIn: true, checkedInAt: time, door: DOOR } : item,
+      );
+      attendeesRef.current = next;
+      setAttendees(next);
+      setCount((value) => value + 1);
+      setRecent((items) => [{ id, name: person.name, time, note: person.ticket }, ...items].slice(0, 5));
+      setQuery("");
+      setNotice(null);
+      setSecondsLeft(SUCCESS_HOLD_SECONDS);
+      setPhase({ name: "success", id, time, flag });
+    },
+    [takeTime],
+  );
+
+  const openPerson = useCallback(
+    (id: string) => {
+      const person = attendeesRef.current.find((item) => item.id === id);
+      if (!person) return;
+      setQuery("");
+      setNotice(null);
+      if (person.checkedIn) {
+        setPhase({ name: "problem", kind: "duplicate", id });
+        return;
+      }
+      if (person.balance) {
+        setPhase({ name: "problem", kind: "unpaid", id });
+        return;
+      }
+      if (person.wrongDay) {
+        setPhase({ name: "problem", kind: "wrong-day", id });
+        return;
+      }
+      checkIn(id);
+    },
+    [checkIn],
+  );
+
+  useEffect(() => {
+    if (phase.name !== "reading") return;
+    const event = phase.event;
+    const timer = window.setTimeout(() => {
+      if (event === "unknown") {
+        setNotice(null);
+        setPhase({ name: "problem", kind: "unknown" });
+        return;
+      }
+      openPerson(event);
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [phase, openPerson]);
+
+  useEffect(() => {
+    if (phase.name !== "success") return;
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      const left = SUCCESS_HOLD_SECONDS - Math.floor((Date.now() - started) / 1000);
+      if (left <= 0) {
+        setSecondsLeft(0);
+        setPhase({ name: "ready" });
+        return;
+      }
+      setSecondsLeft(left);
+    }, 200);
+    return () => window.clearInterval(timer);
+  }, [phase]);
+
+  useEffect(() => {
+    setPrinted(false);
+  }, [phase]);
+
+  const remaining = Math.max(0, TARGET - count);
+  const minutesToKeynote = Math.max(0, KEYNOTE_MINUTE - minute);
+  const elapsed = Math.max(1, minute - OPEN_MINUTE);
+  const expected = Math.round((TARGET * Math.min(elapsed, KEYNOTE_MINUTE - OPEN_MINUTE)) / (KEYNOTE_MINUTE - OPEN_MINUTE));
+  const ahead = count >= expected;
+  const queueLeft = QUEUE.length - queueIndex;
+  const finderInStage = phase.name === "lookup" || (phase.name === "problem" && phase.kind === "unknown");
+
+  const startScan = () => {
+    if (phase.name === "reading") return;
+    const event = QUEUE[queueIndex];
+    if (!event) return;
+    setQueueIndex((index) => index + 1);
+    setNotice(null);
+    setPhase({ name: "reading", event });
+  };
+
+  const backToScanner = () => setPhase({ name: "ready" });
+
+  const sendAway = (where: "cash desk" | "registration", person?: Attendee) => {
+    const time = takeTime();
+    setHeld((items) => [{ id: person?.id, name: person?.name ?? "Unrecognised badge", where, time }, ...items]);
+    setQuery("");
+    setPhase({ name: "ready" });
+    setNotice({
+      variant: "info",
+      title: person ? `${person.name} sent to ${where}` : `Sent to ${where}`,
+      body: "They're out of this queue. Scan the next badge.",
+    });
+  };
+
+  const waveThrough = (person: Attendee) => {
+    setPhase({ name: "ready" });
+    setNotice({
+      variant: "success",
+      title: `${person.name} waved through`,
+      body: "They were already checked in, so the count stays the same. Scan the next badge.",
+    });
+  };
+
+  const undo = (id: string, time: string) => {
+    const person = attendeesRef.current.find((item) => item.id === id);
+    if (!person) return;
+    const next = attendeesRef.current.map((item) =>
+      item.id === id ? { ...item, checkedIn: false, checkedInAt: undefined, door: undefined } : item,
+    );
+    attendeesRef.current = next;
+    setAttendees(next);
+    setCount((value) => Math.max(0, value - 1));
+    setRecent((items) => items.filter((item) => !(item.id === id && item.time === time)));
+    setPhase({ name: "ready" });
+    setNotice({
+      variant: "warning",
+      title: `Check-in cancelled for ${person.name}`,
+      body: "They're not marked as in. Scan them again when they're at the door.",
+    });
+  };
+
+  const replay = () => {
+    const fresh = ATTENDEES.map((person) => ({ ...person }));
+    attendeesRef.current = fresh;
+    minuteRef.current = START_MINUTE;
+    setAttendees(fresh);
+    setMinute(START_MINUTE);
+    setCount(START_COUNT);
+    setRecent(INITIAL_RECENT.map((item) => ({ ...item })));
+    setHeld([]);
+    setQueueIndex(0);
+    setQuery("");
+    setNotice(null);
+    setPrinted(false);
+    setSecondsLeft(SUCCESS_HOLD_SECONDS);
+    setPhase({ name: "ready" });
+  };
+
+  const activeId = phase.name === "success" || phase.name === "problem" ? phase.id : undefined;
+  const active = attendees.find((person) => person.id === activeId);
+  const earlierHandoff = active ? held.find((item) => item.id === active.id) : undefined;
+
+  return (
+    <Box p={4} display="flex" flexDirection="column" gap={3}>
+      <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={3} flexWrap="wrap">
+        <Box display="flex" flexDirection="column" gap={1}>
+          <Typography variant="h2" m={0}>
+            {DOOR} check-in
+          </Typography>
+          <Typography m={0} color="subtle">
+            Sage Summit, London · Wednesday 30 September · Main entrance
+          </Typography>
+        </Box>
+        <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Pill variant={ahead ? "green" : "orange"} fill>
+              {ahead ? "Ahead" : "Behind"}
+            </Pill>
+            <Typography variant="h3" m={0}>
+              {count} of {TARGET}
+            </Typography>
+          </Box>
+          <Typography m={0} color="subtle">
+            {minutesToKeynote === 0
+              ? "The 10:30 keynote has started. Keep checking people in."
+              : `${remaining} to go · ${minutesToKeynote} minutes until the 10:30 keynote`}
+          </Typography>
+        </Box>
+      </Box>
+
+      <ProgressTracker
+        progress={Math.min(100, Math.round((count / TARGET) * 100))}
+        description="Checked in today"
+        currentProgressLabel={String(count)}
+        maxProgressLabel={String(TARGET)}
+        customValuePreposition="of"
+        variant={ahead ? "success" : "warning"}
+        size="medium"
+      />
+
+      {notice && (
+        <Message variant={notice.variant} title={notice.title} onDismiss={() => setNotice(null)}>
+          {notice.body}
+        </Message>
+      )}
+
+      <Box aria-live="polite" aria-atomic="true">
+        {phase.name === "ready" && (
+          <Tile orientation="vertical" highlightVariant="info" borderVariant="info" p={4} width="100%">
+            <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={4}>
+              <Icon type="scan" size="large" color="info" aria-hidden />
+              <Typography variant="h1" m={0} textAlign="center">
+                Ready for the next badge
+              </Typography>
+              <Typography m={0} color="subtle" textAlign="center">
+                Hold the QR code to the reader. A good scan checks them in with no extra tap.
+              </Typography>
+              {recent[0] && (
+                <Typography m={0} color="subtle">
+                  Last through: {recent[0].name} at {recent[0].time}
+                </Typography>
+              )}
+              <Box width="320px" mt={1}>
+                {queueLeft > 0 ? (
+                  <Button variantType="primary" size="large" fullWidth iconType="scan" onClick={startScan}>
+                    Scan badge
+                  </Button>
+                ) : (
+                  <Button variantType="primary" size="large" fullWidth iconType="replay" onClick={replay}>
+                    Run the morning again
+                  </Button>
+                )}
+              </Box>
+              <Typography m={0} color="subtle" textAlign="center">
+                {queueLeft > 0
+                  ? "Green means wave them in. Anything else, take the staff action, then scan the next badge."
+                  : "Everyone in this arrival run has been seen. Look someone up, or run the morning again."}
+              </Typography>
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "reading" && (
+          <Tile orientation="vertical" highlightVariant="info" borderVariant="info" p={4} width="100%">
+            <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={5}>
+              <Loader loaderType="ring" size="large" loaderLabel="Reading badge" showLabel />
+              <Typography variant="h2" m={0}>
+                Reading badge
+              </Typography>
+              <Typography m={0} color="subtle">
+                Hold it still for a moment.
+              </Typography>
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "success" && active && (
+          <Tile orientation="vertical" highlightVariant="success" borderVariant="positive" borderWidth="borderWidth200" p={4} width="100%">
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Icon type="tick_circle" size="large" color="positive" aria-hidden />
+                <Pill variant="green" fill>
+                  Checked in
+                </Pill>
+              </Box>
+              <PersonLine person={active} />
+              <Typography m={0} color="positive" weight="medium">
+                Checked in at {phase.time} · {DOOR}
+              </Typography>
+              <Message variant="success" title="Wave them through">
+                The badge is already printed. No need to keep them at the desk.
+              </Message>
+              {active.hint && (
+                <Message variant="info" title="Also tell them">
+                  {active.hint}
+                </Message>
+              )}
+              {phase.flag && (
+                <Message variant="warning" title="Flagged for the desk">
+                  {phase.flag}
+                </Message>
+              )}
+              <Button variantType="primary" size="large" fullWidth iconType="scan" onClick={backToScanner}>
+                Next badge
+              </Button>
+              <Typography m={0} color="subtle">
+                Scanner comes back in {secondsLeft} seconds, so the next person is not waiting on a tap.
+              </Typography>
+              <Button variantType="tertiary" size="small" iconType="undo" onClick={() => undo(active.id, phase.time)}>
+                Undo this check-in
+              </Button>
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "problem" && phase.kind === "duplicate" && active && (
+          <Tile orientation="vertical" highlightVariant="warning" borderVariant="caution" borderWidth="borderWidth200" p={4} width="100%">
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Icon type="warning" size="large" color="caution" aria-hidden />
+                <Pill variant="orange" fill>
+                  Already checked in
+                </Pill>
+              </Box>
+              <PersonLine person={active} />
+              <Typography m={0}>
+                Checked in at {active.checkedInAt} at {active.door ?? DOOR}. A second scan would count them twice.
+              </Typography>
+              {active.balance && <Typography m={0}>{active.balance} is still outstanding on this order.</Typography>}
+              {active.wrongDay && <Typography m={0}>This Thursday pass was let in today.</Typography>}
+              <Typography m={0} weight="medium">
+                Say: "You're already in. Straight on through."
+              </Typography>
+              <Typography variant="h5" m={0}>
+                Staff action
+              </Typography>
+              <Button variantType="primary" size="large" fullWidth iconType="tick" onClick={() => waveThrough(active)}>
+                Wave through
+              </Button>
+              <Box display="flex" gap={2} flexWrap="wrap">
+                <Button variantType="secondary" size="medium" iconType="print" onClick={() => setPrinted(true)}>
+                  {printed ? "Print again" : "Reprint badge"}
+                </Button>
+                <Button
+                  variantType="tertiary"
+                  size="medium"
+                  iconType="search"
+                  onClick={() => {
+                    setQuery("");
+                    setPhase({
+                      name: "lookup",
+                      prompt: "The badge belongs to someone else. Search the person standing here.",
+                    });
+                  }}
+                >
+                  Wrong person
+                </Button>
+              </Box>
+              {printed && (
+                <Message variant="success" title="Badge sent to the printer">
+                  Door A printer. Hand it over, then wave them through.
+                </Message>
+              )}
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "problem" && phase.kind === "unpaid" && active?.balance && (
+          <Tile orientation="vertical" highlightVariant="error" borderVariant="negative" borderWidth="borderWidth200" p={4} width="100%">
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Icon type="error" size="large" color="negative" aria-hidden />
+                <Pill variant="red" fill>{`${active.balance} still due`}</Pill>
+              </Box>
+              <PersonLine person={active} />
+              <Typography m={0}>This pass is not valid until the balance is paid. Don't let them into the hall yet.</Typography>
+              {earlierHandoff && (
+                <Message variant="warning" title="Already handed off">
+                  Sent to {earlierHandoff.where} at {earlierHandoff.time}. Only send them again if they are back at the door.
+                </Message>
+              )}
+              <Typography m={0} weight="medium">
+                Say: "There's {active.balance} left on this pass. The cash desk is on your right."
+              </Typography>
+              <Typography variant="h5" m={0}>
+                Staff action
+              </Typography>
+              <Button variantType="primary" size="large" fullWidth iconType="arrow_right" onClick={() => sendAway("cash desk", active)}>
+                Send to cash desk
+              </Button>
+              <Button
+                variantType="secondary"
+                size="medium"
+                iconType="tick"
+                onClick={() => checkIn(active.id, `${active.balance} is still due. The cash desk has ${active.name}'s name.`)}
+              >
+                Check in and flag the {active.balance}
+              </Button>
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "problem" && phase.kind === "wrong-day" && active && (
+          <Tile orientation="vertical" highlightVariant="warning" borderVariant="caution" borderWidth="borderWidth200" p={4} width="100%">
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Icon type="warning" size="large" color="caution" aria-hidden />
+                <Pill variant="orange" fill>
+                  Not valid today
+                </Pill>
+              </Box>
+              <PersonLine person={active} />
+              <Typography m={0}>This pass is for Thursday's workshop. Today is the main conference.</Typography>
+              {earlierHandoff && (
+                <Message variant="warning" title="Already handed off">
+                  Sent to {earlierHandoff.where} at {earlierHandoff.time}.
+                </Message>
+              )}
+              <Typography m={0} weight="medium">
+                Say: "This pass is for Thursday. Registration can sort a day pass. They're on your left."
+              </Typography>
+              <Typography variant="h5" m={0}>
+                Staff action
+              </Typography>
+              <Button
+                variantType="primary"
+                size="large"
+                fullWidth
+                iconType="arrow_right"
+                onClick={() => sendAway("registration", active)}
+              >
+                Send to registration
+              </Button>
+              <Button
+                variantType="secondary"
+                size="medium"
+                iconType="tick"
+                onClick={() =>
+                  checkIn(active.id, "Thursday workshop pass used for Wednesday. Registration has been told.")
+                }
+              >
+                Check in on today's list
+              </Button>
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "problem" && phase.kind === "unknown" && (
+          <Tile orientation="vertical" highlightVariant="error" borderVariant="negative" borderWidth="borderWidth200" p={4} width="100%">
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Icon type="error" size="large" color="negative" aria-hidden />
+                <Pill variant="red" fill>
+                  Badge not recognised
+                </Pill>
+              </Box>
+              <Typography variant="h1" m={0}>
+                This code isn't on today's list
+              </Typography>
+              <Typography m={0}>It may be damaged, a photo of a badge, or from another event.</Typography>
+              <Typography m={0} weight="medium">
+                Say: "I can't read this one. What's the name on the badge?"
+              </Typography>
+            </Box>
+          </Tile>
+        )}
+
+        {phase.name === "lookup" && (
+          <Tile orientation="vertical" highlightVariant="info" borderVariant="info" borderWidth="borderWidth200" p={4} width="100%">
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Pill variant="blue" fill>
+                Manual check-in
+              </Pill>
+              <Typography variant="h1" m={0}>
+                Who is at the door?
+              </Typography>
+              <Typography m={0}>{phase.prompt}</Typography>
+            </Box>
+          </Tile>
+        )}
+      </Box>
+
+      {finderInStage && (
+        <Tile orientation="vertical" p={3} width="100%">
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Typography variant="h5" m={0}>
+              Staff action
+            </Typography>
+            <Finder people={attendees} query={query} onQuery={setQuery} onPick={openPerson} />
+            <Box display="flex" gap={2} flexWrap="wrap">
+              {phase.name === "problem" && phase.kind === "unknown" && (
+                <Button variantType="secondary" size="medium" iconType="arrow_right" onClick={() => sendAway("registration")}>
+                  Send to registration
+                </Button>
+              )}
+              <Button variantType="tertiary" size="medium" onClick={backToScanner}>
+                Back to scanner
+              </Button>
+            </Box>
+          </Box>
+        </Tile>
+      )}
+
+      <Box display="flex" flexWrap="wrap" gap={3}>
+        <Box flex="1" minWidth="280px" display="flex" flexDirection="column" gap={2}>
+          <Typography variant="h4" m={0}>
+            {finderInStage ? "Look-up is open above" : "Badge failed? Find them"}
+          </Typography>
+          {finderInStage ? (
+            <Typography m={0} color="subtle">
+              Search is on the main panel so you can finish this person without leaving the queue.
+            </Typography>
+          ) : (
+            <Finder people={attendees} query={query} onQuery={setQuery} onPick={openPerson} />
+          )}
+        </Box>
+
+        <Box flex="1" minWidth="280px" display="flex" flexDirection="column" gap={2}>
+          <Typography variant="h4" m={0}>
+            Last through {DOOR}
+          </Typography>
+          <Tile orientation="vertical" variant="grey" p={2}>
+            <Box display="flex" flexDirection="column" gap={2}>
+              {recent.map((item, index) => (
+                <Box key={`${item.id}-${item.time}`} display="flex" flexDirection="column" gap={2}>
+                  {index > 0 && <Divider />}
+                  <Box display="flex" justifyContent="space-between" gap={2}>
+                    <Box display="flex" flexDirection="column" gap={0}>
+                      <Typography variant="strong" m={0}>
+                        {item.name}
+                      </Typography>
+                      <Typography m={0} color="subtle">
+                        {item.note}
+                      </Typography>
+                    </Box>
+                    <Typography m={0} color="subtle">
+                      {item.time}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Tile>
+
+          {held.length > 0 && (
+            <Box display="flex" flexDirection="column" gap={1}>
+              <Typography variant="h4" m={0}>
+                Sent out of the queue
+              </Typography>
+              {held.map((item) => (
+                <Box key={`${item.name}-${item.time}`} display="flex" justifyContent="space-between" gap={2}>
+                  <Typography m={0}>
+                    {item.name} · {item.where}
+                  </Typography>
+                  <Typography m={0} color="subtle">
+                    {item.time}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          <Button variantType="tertiary" size="small" iconType="replay" onClick={replay}>
+            Run the morning again
+          </Button>
+        </Box>
+      </Box>
     </Box>
   );
 }
