@@ -34,7 +34,7 @@ type Attendee = {
   hint?: string;
 };
 
-type Recent = { id: string; name: string; time: string; note: string };
+type Recent = { id: string; name: string; time: string; note: string; session?: boolean };
 type Held = { id?: string; name: string; where: string; time: string };
 type Notice = { variant: "info" | "success" | "warning"; title: string; body: string };
 
@@ -246,7 +246,7 @@ export default function Team10Playground() {
       attendeesRef.current = next;
       setAttendees(next);
       setCount((value) => value + 1);
-      setRecent((items) => [{ id, name: person.name, time, note: person.ticket }, ...items].slice(0, 5));
+      setRecent((items) => [{ id, name: person.name, time, note: person.ticket, session: true }, ...items].slice(0, 5));
       setQuery("");
       setNotice(null);
       setSecondsLeft(SUCCESS_HOLD_SECONDS);
@@ -303,7 +303,7 @@ export default function Team10Playground() {
         return;
       }
       setSecondsLeft(left);
-    }, 200);
+    }, 1000);
     return () => window.clearInterval(timer);
   }, [phase]);
 
@@ -353,7 +353,7 @@ export default function Team10Playground() {
 
   const undo = (id: string, time: string) => {
     const person = attendeesRef.current.find((item) => item.id === id);
-    if (!person) return;
+    if (!person?.checkedIn) return;
     const next = attendeesRef.current.map((item) =>
       item.id === id ? { ...item, checkedIn: false, checkedInAt: undefined, door: undefined } : item,
     );
@@ -386,6 +386,7 @@ export default function Team10Playground() {
     setPhase({ name: "ready" });
   };
 
+  const latestSession = recent.find((item) => item.session);
   const activeId = phase.name === "success" || phase.name === "problem" ? phase.id : undefined;
   const active = attendees.find((person) => person.id === activeId);
   const earlierHandoff = active ? held.find((item) => item.id === active.id) : undefined;
@@ -734,7 +735,7 @@ export default function Team10Playground() {
               {recent.map((item, index) => (
                 <Box key={`${item.id}-${item.time}`} display="flex" flexDirection="column" gap={2}>
                   {index > 0 && <Divider />}
-                  <Box display="flex" justifyContent="space-between" gap={2}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" gap={2}>
                     <Box display="flex" flexDirection="column" gap={0}>
                       <Typography variant="strong" m={0}>
                         {item.name}
@@ -743,9 +744,22 @@ export default function Team10Playground() {
                         {item.note}
                       </Typography>
                     </Box>
-                    <Typography m={0} color="subtle">
-                      {item.time}
-                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+                      <Typography m={0} color="subtle">
+                        {item.time}
+                      </Typography>
+                      {item.session && item.id === latestSession?.id && item.time === latestSession.time && (
+                        <Button
+                          variantType="tertiary"
+                          size="small"
+                          iconType="undo"
+                          aria-label={`Undo check-in for ${item.name}`}
+                          onClick={() => undo(item.id, item.time)}
+                        >
+                          Undo
+                        </Button>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
               ))}
