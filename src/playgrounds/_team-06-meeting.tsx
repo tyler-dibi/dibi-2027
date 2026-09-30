@@ -191,6 +191,41 @@ function summarise(cues: Cue[]): string[] {
   return bullets;
 }
 
+export function refreshFromCues(brief: MeetingBrief, cues: Cue[]): MeetingBrief {
+  return {
+    ...brief,
+    cues,
+    decisions: findDecisions(cues),
+    actions: findActions(cues, brief.you),
+  };
+}
+
+export function stitchLabel(text: string): { src: string; height: number } {
+  const safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const words = safe.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > 32 && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  const shown = lines.slice(0, 5);
+  if (lines.length > shown.length && shown.length > 0) {
+    const last = shown.length - 1;
+    shown[last] = `${shown[last]}…`;
+  }
+  const height = Math.max(128, 36 + shown.length * 24);
+  const tspans = (shown.length > 0 ? shown : ["Blank label"]).map((line, index) => `<tspan x="28" y="${40 + index * 24}">${line}</tspan>`).join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="${height}" viewBox="0 0 640 ${height}"><rect width="640" height="${height}" fill="linen"/><rect x="12" y="12" width="616" height="${height - 24}" fill="none" stroke="saddlebrown" stroke-width="3" stroke-dasharray="7 5"/><text font-family="Georgia, serif" font-size="20" fill="saddlebrown">${tspans}</text></svg>`;
+  return { src: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`, height };
+}
+
 function findDecisions(cues: Cue[]): Decision[] {
   const decisions: Decision[] = [];
   for (const cue of cues) {

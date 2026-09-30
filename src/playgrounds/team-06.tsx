@@ -7,6 +7,7 @@ import { Checkbox } from "carbon-react/lib/components/checkbox";
 import Dialog from "carbon-react/lib/components/dialog";
 import FileInput from "carbon-react/lib/components/file-input";
 import Icon from "carbon-react/lib/components/icon";
+import Image from "carbon-react/lib/components/image";
 import Link from "carbon-react/lib/components/link";
 import Loader from "carbon-react/lib/components/loader/__next__";
 import { MenuFullscreen, MenuItem } from "carbon-react/lib/components/menu";
@@ -21,7 +22,10 @@ import {
   answerQuestion,
   buildBrief,
   isVideoFile,
+  refreshFromCues,
   sampleBrief,
+  stitchLabel,
+  type ActionItem,
   type MeetingBrief,
 } from "./_team-06-meeting";
 
@@ -52,6 +56,8 @@ export default function Team06Playground() {
   const [asked, setAsked] = useState(false);
   const [circulateOpen, setCirculateOpen] = useState(false);
   const [sent, setSent] = useState(false);
+  const [printAction, setPrintAction] = useState<ActionItem | null>(null);
+  const [queued, setQueued] = useState<Record<string, boolean>>({});
 
   const reset = () => {
     setPhase("upload");
@@ -69,6 +75,8 @@ export default function Team06Playground() {
     setAsked(false);
     setCirculateOpen(false);
     setSent(false);
+    setPrintAction(null);
+    setQueued({});
   };
 
   const showBrief = (next: MeetingBrief) => {
@@ -82,8 +90,18 @@ export default function Team06Playground() {
     setAnswer("");
     setAsked(false);
     setSent(false);
+    setPrintAction(null);
+    setQueued({});
     setError("");
     setPhase("ready");
+  };
+
+  const updateCue = (cueId: string, text: string) => {
+    setBrief((current) => {
+      if (!current) return current;
+      const cues = current.cues.map((cue) => (cue.id === cueId ? { ...cue, text } : cue));
+      return refreshFromCues(current, cues);
+    });
   };
 
   const readTranscript = (file: File, attachedVideo?: string) => {
@@ -280,6 +298,9 @@ export default function Team06Playground() {
                 onChange={(_event, isExpanded) => setTranscriptOpen(isExpanded)}
               >
                 <Box display="flex" flexDirection="column" gap={2}>
+                  <Typography color="subtle" m={0}>
+                    Edit any part. Key decisions and Jen&apos;s actions update as you type.
+                  </Typography>
                   {brief.videoName && (
                     <Box display="flex" alignItems="center" gap={1}>
                       <Icon type="video" aria-hidden />
@@ -294,10 +315,12 @@ export default function Team06Playground() {
                         width="100%"
                         borderVariant={activeCue === cue.id ? "selected" : "default"}
                       >
-                        <Typography variant="strong" m={0}>
-                          {cue.timeLabel} · {cue.speaker}
-                        </Typography>
-                        <Typography m={0}>{cue.text}</Typography>
+                        <Textarea
+                          label={`${cue.timeLabel} · ${cue.speaker}`}
+                          value={cue.text}
+                          rows={3}
+                          onChange={(event) => updateCue(cue.id, event.target.value)}
+                        />
                       </Tile>
                     </Box>
                   ))}
@@ -340,6 +363,33 @@ export default function Team06Playground() {
               </Tile>
             </Box>
 
+            <Box id="embroidery">
+              <Tile orientation="vertical" p={3} width="100%">
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Typography variant="h3" m={0}>
+                    Printing the main points
+                  </Typography>
+                  <Typography m={0}>
+                    An embroidery machine cannot take a sentence the way a printer takes a page. Each main point has to become stitches first.
+                  </Typography>
+                  <Typography variant="ul" m={0}>
+                    <Typography as="li" mb={1}>
+                      Shorten the point to about 30 characters so it fits a hoop.
+                    </Typography>
+                    <Typography as="li" mb={1}>
+                      Digitise that line into a stitch file, usually DST or PES, with software such as Hatch, Wilcom or Ink/Stitch.
+                    </Typography>
+                    <Typography as="li" mb={1}>
+                      Send the file to a machine that accepts a network job or a watched folder. Many shop machines only take a USB stick.
+                    </Typography>
+                    <Typography as="li">
+                      Someone still loads the hoop, thread and fabric. This screen only previews the words.
+                    </Typography>
+                  </Typography>
+                </Box>
+              </Tile>
+            </Box>
+
             <Box id="actions">
               <Tile orientation="vertical" p={3} width="100%">
                 <Box display="flex" flexDirection="column" gap={2}>
@@ -352,16 +402,28 @@ export default function Team06Playground() {
                     </Typography>
                     <Pill variant="blue">You</Pill>
                   </Box>
+                  <Typography color="subtle" m={0}>
+                    Each label is dummy text in an image. Print queues a preview, not a real stitch file.
+                  </Typography>
                   {brief.actions.length > 0 ? (
-                    brief.actions.map((action) => (
-                      <Checkbox
-                        key={action.id}
-                        name={action.id}
-                        label={action.text}
-                        checked={Boolean(done[action.id])}
-                        onChange={(event) => setDone({ ...done, [action.id]: event.target.checked })}
-                      />
-                    ))
+                    brief.actions.map((action) => {
+                      const label = stitchLabel(action.text);
+                      return (
+                        <Box key={action.id} display="flex" flexDirection="column" gap={1}>
+                          <Checkbox
+                            name={action.id}
+                            label={action.text}
+                            checked={Boolean(done[action.text])}
+                            onChange={(event) => setDone({ ...done, [action.text]: event.target.checked })}
+                          />
+                          <Image src={label.src} alt={action.text} width="100%" height={`${label.height}px`} />
+                          {queued[action.text] && <Pill variant="green">Queued</Pill>}
+                          <Button variantType="secondary" iconType="print" fullWidth onClick={() => setPrintAction(action)}>
+                            Print
+                          </Button>
+                        </Box>
+                      );
+                    })
                   ) : (
                     <Typography m={0}>Nothing in this transcript is assigned to Jen.</Typography>
                   )}
@@ -524,6 +586,45 @@ export default function Team06Playground() {
             </Typography>
           )}
         </Box>
+      </Dialog>
+
+      <Dialog
+        open={printAction != null}
+        onCancel={() => setPrintAction(null)}
+        title="Print label"
+        size="small"
+        footer={
+          <Box display="flex" gap={2} justifyContent="flex-end">
+            <Button variantType="tertiary" onClick={() => setPrintAction(null)}>
+              Close
+            </Button>
+            <Button
+              variantType="primary"
+              iconType="print"
+              onClick={() => {
+                if (!printAction) return;
+                setQueued({ ...queued, [printAction.text]: true });
+                setPrintAction(null);
+              }}
+            >
+              Queue preview
+            </Button>
+          </Box>
+        }
+      >
+        {printAction && (
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Image
+              src={stitchLabel(printAction.text).src}
+              alt={printAction.text}
+              width="100%"
+              height={`${stitchLabel(printAction.text).height}px`}
+            />
+            <Typography m={0}>
+              This queues a dummy label for those words. A real machine still needs a digitised stitch file, a hoop and someone to load the thread.
+            </Typography>
+          </Box>
+        )}
       </Dialog>
     </Box>
   );
