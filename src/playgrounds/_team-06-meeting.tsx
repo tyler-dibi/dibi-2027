@@ -320,6 +320,66 @@ export function sampleBrief(videoName?: string): MeetingBrief {
   };
 }
 
+export type JiraDraft = {
+  key: string;
+  summary: string;
+  description: string;
+  acceptance: string[];
+  assignee: string;
+  priority: "High" | "Medium";
+  due: string;
+  labels: string[];
+};
+
+function ticketKey(id: string): string {
+  const total = id.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return `GROW-${200 + (total % 80)}`;
+}
+
+function dueFor(text: string): string {
+  if (/monday 5 october/i.test(text)) return "Mon 5 Oct 2026";
+  if (/4pm|today/i.test(text)) return "Thu 25 Sep 2026";
+  if (/friday 2 october/i.test(text)) return "Fri 2 Oct 2026";
+  if (/week of 12 october/i.test(text)) return "Fri 9 Oct 2026";
+  return "Fri 2 Oct 2026";
+}
+
+export function jiraDraft(action: ActionItem, brief: MeetingBrief): JiraDraft {
+  const summary = action.text.replace(/\.$/, "");
+  const people = brief.attendees.length > 0 ? brief.attendees.join(", ") : "the people who were in the meeting";
+  if (/figma/i.test(action.text)) {
+    return {
+      key: ticketKey(action.id),
+      summary: "Share the Figma prototype with the development team",
+      description: `From ${brief.title} (${brief.whenLabel}). Jen sends the meeting catch-up prototype to the developers on Grower & Co. They get view access, a pointer to the Your meeting frame, and the open questions still sitting with ${people}.`,
+      acceptance: [
+        "The prototype link is posted where the developers already work, with view access for the squad.",
+        "The Your meeting frame is named so it can be found without a walkthrough.",
+        "Comments from the weekly are answered, or left as open questions on that frame.",
+      ],
+      assignee: "Jen Hart",
+      priority: "Medium",
+      due: "Fri 2 Oct 2026",
+      labels: ["handover", "figma", "grower"],
+    };
+  }
+  const priority = /today|4pm|monday|friday/i.test(action.text) ? "High" : "Medium";
+  return {
+    key: ticketKey(action.id),
+    summary,
+    description: `Raised from ${brief.title} (${brief.whenLabel}). ${brief.you} owns this and tells ${people} when it is done.`,
+    acceptance: [
+      `${summary.charAt(0).toUpperCase()}${summary.slice(1)} is finished and checked.`,
+      "The people from the meeting can see the outcome without asking for the notes again.",
+      "This catch-up is updated once the action is done.",
+    ],
+    assignee: "Jen Hart",
+    priority,
+    due: dueFor(action.text),
+    labels: ["meeting-action", "grower"],
+  };
+}
+
 export function isVideoFile(file: File): boolean {
   return file.type.startsWith("video/") || /\.(mp4|mov|webm|m4v)$/i.test(file.name);
 }

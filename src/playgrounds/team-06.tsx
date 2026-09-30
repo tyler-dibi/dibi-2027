@@ -22,6 +22,7 @@ import {
   answerQuestion,
   buildBrief,
   isVideoFile,
+  jiraDraft,
   refreshFromCues,
   sampleBrief,
   stitchLabel,
@@ -60,6 +61,10 @@ export default function Team06Playground() {
   const [queued, setQueued] = useState<Record<string, boolean>>({});
   const [approved, setApproved] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [jiraAction, setJiraAction] = useState<ActionItem | null>(null);
+  const [jiraKeys, setJiraKeys] = useState<Record<string, string>>({});
+  const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [followUpBooked, setFollowUpBooked] = useState(false);
 
   const reset = () => {
     setPhase("upload");
@@ -81,6 +86,10 @@ export default function Team06Playground() {
     setQueued({});
     setApproved(false);
     setPendingFile(null);
+    setJiraAction(null);
+    setJiraKeys({});
+    setFollowUpOpen(false);
+    setFollowUpBooked(false);
   };
 
   const showBrief = (next: MeetingBrief) => {
@@ -96,6 +105,10 @@ export default function Team06Playground() {
     setSent(false);
     setPrintAction(null);
     setQueued({});
+    setJiraAction(null);
+    setJiraKeys({});
+    setFollowUpOpen(false);
+    setFollowUpBooked(false);
     setError("");
     setPhase("ready");
   };
@@ -178,6 +191,7 @@ export default function Team06Playground() {
 
   const attendees = brief?.attendees ?? [];
   const recipientList = attendees.length > 0 ? attendees.join(", ") : "everyone who was in the meeting";
+  const ticket = jiraAction && brief ? jiraDraft(jiraAction, brief) : null;
 
   return (
     <Box bg="var(--colorsUtilityMajor025)" display="flex" justifyContent="center" minHeight="100%">
@@ -449,9 +463,21 @@ export default function Team06Playground() {
                               checked={Boolean(done[action.text])}
                               onChange={(event) => setDone({ ...done, [action.text]: event.target.checked })}
                             />
-                            <Button variantType="secondary" size="small" iconType="print" onClick={() => setPrintAction(action)}>
-                              Print
-                            </Button>
+                            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+                              <Button variantType="secondary" size="small" iconType="print" onClick={() => setPrintAction(action)}>
+                                Print
+                              </Button>
+                              <Link
+                                href={`#${action.id}-jira`}
+                                icon="link"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  setJiraAction(action);
+                                }}
+                              >
+                                {jiraKeys[action.id] ?? "Create Jira ticket"}
+                              </Link>
+                            </Box>
                           </Box>
                           <Image src={label.src} alt={action.text} width="100%" height={`${label.height}px`} />
                           {queued[action.text] && <Pill variant="green">Queued</Pill>}
@@ -460,6 +486,36 @@ export default function Team06Playground() {
                     })
                   ) : (
                     <Typography m={0}>Nothing in this transcript is assigned to Jen.</Typography>
+                  )}
+                </Box>
+              </Tile>
+            </Box>
+
+            <Box id="follow-up">
+              <Tile orientation="vertical" p={3} width="100%">
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Typography variant="h3" m={0}>
+                    Schedule a follow-up
+                  </Typography>
+                  {followUpBooked ? (
+                    <Message variant="success" title="Follow-up in the diary">
+                      Tue 6 Oct 2026, 09:30–09:50. Held for Jen Hart and {recipientList}. The agenda is to close the open actions from this meeting.
+                    </Message>
+                  ) : (
+                    <>
+                      <Typography m={0}>
+                        I can put 20 minutes in the diary automatically so these actions get closed with the people who were there.
+                      </Typography>
+                      <Typography variant="strong" m={0}>
+                        Tue 6 Oct 2026, 09:30–09:50
+                      </Typography>
+                      <Typography color="subtle" m={0}>
+                        Jen Hart, {recipientList}
+                      </Typography>
+                      <Button variantType="primary" fullWidth iconType="calendar" onClick={() => setFollowUpOpen(true)}>
+                        Schedule follow-up
+                      </Button>
+                    </>
                   )}
                 </Box>
               </Tile>
@@ -656,6 +712,101 @@ export default function Team06Playground() {
             />
             <Typography m={0}>
               This queues a dummy label for those words. A real machine still needs a digitised stitch file, a hoop and someone to load the thread.
+            </Typography>
+          </Box>
+        )}
+      </Dialog>
+
+      <Dialog
+        open={followUpOpen}
+        onCancel={() => setFollowUpOpen(false)}
+        title="Schedule a follow-up"
+        size="small"
+        footer={
+          <Box display="flex" gap={2} justifyContent="flex-end">
+            <Button variantType="tertiary" onClick={() => setFollowUpOpen(false)}>
+              Not now
+            </Button>
+            <Button
+              variantType="primary"
+              iconType="calendar"
+              onClick={() => {
+                setFollowUpOpen(false);
+                setFollowUpBooked(true);
+              }}
+            >
+              Add to diary
+            </Button>
+          </Box>
+        }
+      >
+        <Box display="flex" flexDirection="column" gap={2}>
+          <Typography m={0}>This will hold 20 minutes and invite the people from the meeting.</Typography>
+          <Typography variant="strong" m={0}>
+            Grower actions follow-up
+          </Typography>
+          <Typography m={0}>Tue 6 Oct 2026, 09:30–09:50</Typography>
+          <Typography m={0}>Jen Hart, {recipientList}</Typography>
+          <Typography color="subtle" m={0}>
+            Agenda: close the open actions, including sharing the Figma prototype with the developers.
+          </Typography>
+        </Box>
+      </Dialog>
+
+      <Dialog
+        open={ticket != null}
+        onCancel={() => setJiraAction(null)}
+        title={ticket ? ticket.key : "Jira ticket"}
+        subtitle="GROW · Grower & Co"
+        size="medium"
+        footer={
+          <Box display="flex" gap={2} justifyContent="flex-end">
+            <Button variantType="tertiary" onClick={() => setJiraAction(null)}>
+              Close
+            </Button>
+            {ticket && jiraAction && !jiraKeys[jiraAction.id] && (
+              <Button
+                variantType="primary"
+                iconType="link"
+                onClick={() => {
+                  if (!jiraAction || !ticket) return;
+                  setJiraKeys({ ...jiraKeys, [jiraAction.id]: ticket.key });
+                  setJiraAction(null);
+                }}
+              >
+                Create ticket
+              </Button>
+            )}
+          </Box>
+        }
+      >
+        {ticket && (
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <Pill variant="blue">Task</Pill>
+              <Pill variant={ticket.priority === "High" ? "orange" : "grey"}>{ticket.priority}</Pill>
+              {ticket.labels.map((label) => (
+                <Pill key={label}>{label}</Pill>
+              ))}
+            </Box>
+            <Typography variant="h3" m={0}>
+              {ticket.summary}
+            </Typography>
+            <Typography m={0}>Assignee: {ticket.assignee}</Typography>
+            <Typography m={0}>Due: {ticket.due}</Typography>
+            <Typography variant="strong" m={0}>
+              Description
+            </Typography>
+            <Typography m={0}>{ticket.description}</Typography>
+            <Typography variant="strong" m={0}>
+              Acceptance criteria
+            </Typography>
+            <Typography variant="ul" m={0}>
+              {ticket.acceptance.map((item) => (
+                <Typography key={item} as="li" mb={1}>
+                  {item}
+                </Typography>
+              ))}
             </Typography>
           </Box>
         )}
