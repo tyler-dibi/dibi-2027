@@ -15,6 +15,7 @@ import {
 import Message from "carbon-react/lib/components/message";
 import Pill from "carbon-react/lib/components/pill";
 import Portrait from "carbon-react/lib/components/portrait";
+import { StepFlow } from "carbon-react/lib/components/step-flow";
 import Textarea from "carbon-react/lib/components/textarea";
 import Textbox from "carbon-react/lib/components/textbox";
 import { Tile, TileContent } from "carbon-react/lib/components/tile";
@@ -31,6 +32,14 @@ type Answer = {
 };
 
 type Approval = "pending" | "approved" | "returned";
+type Step = 1 | 2 | 3 | 4;
+
+const stepTitle: Record<Step, string> = {
+  1: "The meeting",
+  2: "Legal approval",
+  3: "Summary and decisions",
+  4: "What to do next",
+};
 
 const oneMinute = {
   headline: "The October VAT return is on. Receipt capture is off. You have one email to review.",
@@ -158,10 +167,15 @@ export default function Team07Playground() {
   const [legalNote, setLegalNote] = useState("");
   const [savedNote, setSavedNote] = useState("");
   const [noteNeeded, setNoteNeeded] = useState(false);
+  const [step, setStep] = useState<Step>(1);
 
   const openCount = actions.filter((action) => !done[action.id]).length;
   const yoursDone = Boolean(done.email);
   const summaryReleased = approval === "approved";
+
+  const goOn = () => {
+    setStep((current) => (current === 4 ? 1 : ((current + 1) as Step)));
+  };
 
   const ask = (next: string) => {
     setQuestion(next);
@@ -205,6 +219,17 @@ export default function Team07Playground() {
   return (
     <Box p={4} display="flex" flexDirection="column" gap={3} maxWidth="880px">
       <Box display="flex" flexDirection="column" gap={1}>
+        <Typography variant="h1" m={0}>
+          Catch-up
+        </Typography>
+        <Typography variant="small" color="subtle" m={0}>
+          Making Tax Digital standup · Tuesday 29 September 2026 · 10:00–10:42 · Teams recording
+        </Typography>
+      </Box>
+      <StepFlow title={stepTitle[step]} currentStep={step} totalSteps={4} showProgressIndicator />
+      {step === 1 ? (
+      <Box display="flex" flexDirection="column" gap={3}>
+      <Box display="flex" flexDirection="column" gap={1}>
         <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
           <Pill variant="orange">Missed</Pill>
           {summaryReleased ? <Pill variant="blue">1 minute read</Pill> : null}
@@ -214,19 +239,10 @@ export default function Team07Playground() {
           <Pill variant="green">3 decisions</Pill>
           <Pill variant={yoursDone ? "green" : "orange"}>{yoursDone ? "Your action is done" : "1 action for you"}</Pill>
         </Box>
-        <Typography variant="h1" m={0}>
-          Catch-up
-        </Typography>
         <Typography m={0}>
           {summaryReleased
             ? "You missed the meeting. This is the one-minute version."
             : "You missed the meeting. The AI summary stays with Legal until it is approved."}
-        </Typography>
-        <Typography variant="strong" m={0}>
-          Making Tax Digital standup
-        </Typography>
-        <Typography variant="small" color="subtle" m={0}>
-          Tuesday 29 September 2026 · 10:00–10:42 · Teams recording
         </Typography>
       </Box>
 
@@ -246,7 +262,10 @@ export default function Team07Playground() {
           </Box>
         ))}
       </Box>
+      </Box>
+      ) : null}
 
+      {step === 2 ? (
       <Tile orientation="vertical">
         <TileContent>
           <Box display="flex" flexDirection="column" gap={2}>
@@ -334,7 +353,10 @@ export default function Team07Playground() {
           </Box>
         </TileContent>
       </Tile>
+      ) : null}
 
+      {step === 3 ? (
+      <Box display="flex" flexDirection="column" gap={3}>
       {summaryReleased ? (
         <Box
           p={3}
@@ -406,7 +428,11 @@ export default function Team07Playground() {
           </TileContent>
         </Tile>
       </Box>
+      </Box>
+      ) : null}
 
+      {step === 4 ? (
+      <Box display="flex" flexDirection="column" gap={3}>
       <Box display="flex" flexDirection="column" gap={2}>
         <Box>
           <Typography variant="h2" m={0}>
@@ -511,6 +537,17 @@ export default function Team07Playground() {
           </Box>
         </TileContent>
       </Tile>
+      </Box>
+      ) : null}
+
+      <Box display="flex" justifyContent="space-between" alignItems="center" gap={2} flexWrap="wrap">
+        <Typography variant="small" color="subtle" m={0}>
+          {step === 4 ? "Last part. Continue returns to the meeting." : "Continue to the next part."}
+        </Typography>
+        <Button variantType="primary" iconType="arrow_right" onClick={goOn}>
+          Continue
+        </Button>
+      </Box>
     </Box>
   );
 }
