@@ -18,16 +18,20 @@ import useMediaQuery from "carbon-react/lib/hooks/useMediaQuery";
 import {
   answers,
   durationSeconds,
+  files,
   followUpMessage,
   items,
   matchQuestion,
   meeting,
+  people,
   quoteAt,
   seconds,
   splitQuote,
+  waveBars,
   type Evidence,
   type MatchedAnswer,
   type MeetingItem,
+  type Person,
 } from "./_team-05-data";
 
 export const meta = {
@@ -67,7 +71,7 @@ export default function Team05Playground() {
   const nextId = useRef(0);
 
   const [activeId, setActiveId] = useState("a1");
-  const [playTime, setPlayTime] = useState("12:34");
+  const [playSeconds, setPlaySeconds] = useState(seconds("12:34"));
   const [looseQuote, setLooseQuote] = useState<Evidence | null>(null);
   const [status, setStatus] = useState<Record<string, ItemStatus>>({});
   const [thread, setThread] = useState<QaEntry[]>([]);
@@ -75,6 +79,21 @@ export default function Team05Playground() {
   const [draftOpen, setDraftOpen] = useState(false);
   const [followUp, setFollowUp] = useState(followUpMessage);
   const [toast, setToast] = useState<string | null>(null);
+  const [roster, setRoster] = useState<Person[]>(people);
+  const [consent, setConsent] = useState(false);
+  const [gateOpen, setGateOpen] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [declined, setDeclined] = useState(false);
+  const [summaryReady, setSummaryReady] = useState(false);
+  const [downloadLabel, setDownloadLabel] = useState("Download deck and files");
+  const [downloadBusy, setDownloadBusy] = useState(false);
+  const [clipTime, setClipTime] = useState<string | null>(null);
+  const [clipStep, setClipStep] = useState(0);
+  const [clipDone, setClipDone] = useState(false);
+  const clipTimer = useRef<number | null>(null);
+  const clipTimeRef = useRef<string | null>(null);
+  const createTimer = useRef<number | null>(null);
+  const downloadTimer = useRef<number | null>(null);
 
   const active = items.find((item) => item.id === activeId);
 
@@ -82,17 +101,63 @@ export default function Team05Playground() {
     if (draftOpen) messageRef.current?.focus();
   }, [draftOpen]);
 
+  useEffect(
+    () => () => {
+      if (clipTimer.current) window.clearInterval(clipTimer.current);
+      if (createTimer.current) window.clearTimeout(createTimer.current);
+      if (downloadTimer.current) window.clearTimeout(downloadTimer.current);
+    },
+    [],
+  );
+
   const showToast = (message: string) => {
     setToast(message);
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 2600);
   };
 
+  const stopClip = (keepHead = false) => {
+    if (clipTimer.current) window.clearInterval(clipTimer.current);
+    clipTimer.current = null;
+    if (!keepHead && clipTimeRef.current) setPlaySeconds(seconds(clipTimeRef.current));
+    clipTimeRef.current = null;
+    setClipTime(null);
+    setClipStep(0);
+    setClipDone(false);
+  };
+
+  const playClip = (time: string) => {
+    if (clipTimeRef.current === time && clipTimer.current) {
+      stopClip(false);
+      return;
+    }
+    stopClip(true);
+    const start = seconds(time);
+    let step = 0;
+    clipTimeRef.current = time;
+    setClipTime(time);
+    setClipStep(0);
+    setClipDone(false);
+    clipTimer.current = window.setInterval(() => {
+      step += 1;
+      const fraction = step / 50;
+      setClipStep(step);
+      setPlaySeconds(start + fraction * 5);
+      if (step >= 50) {
+        if (clipTimer.current) window.clearInterval(clipTimer.current);
+        clipTimer.current = null;
+        clipTimeRef.current = null;
+        setClipDone(true);
+      }
+    }, 100);
+  };
+
   const focusItem = (id: string) => {
     const item = items.find((entry) => entry.id === id);
     if (!item) return;
+    stopClip(true);
     setActiveId(id);
-    setPlayTime(item.time);
+    setPlaySeconds(seconds(item.time));
     setLooseQuote(null);
   };
 
@@ -100,8 +165,9 @@ export default function Team05Playground() {
     const match = items.find((item) => item.time === time);
     if (match) focusItem(match.id);
     else {
+      stopClip(true);
       setActiveId("");
-      setPlayTime(time);
+      setPlaySeconds(seconds(time));
       setLooseQuote(quoteAt(time) ?? null);
     }
     timelineRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -134,6 +200,65 @@ export default function Team05Playground() {
     inputRef.current?.focus();
   };
 
+  const showCreating = () => {
+    setCreating(true);
+    setDeclined(false);
+    if (createTimer.current) window.clearTimeout(createTimer.current);
+    createTimer.current = window.setTimeout(() => {
+      setGateOpen(false);
+      setCreating(false);
+      setSummaryReady(true);
+      showToast("Summary created with approval from all 6 attendees");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 1300);
+  };
+
+  const approve = () => {
+    setRoster((prev) => prev.map((person) => (person.initials === "SP" ? { ...person, approved: true } : person)));
+    showCreating();
+  };
+
+  const restart = () => {
+    stopClip(true);
+    if (timer.current) window.clearTimeout(timer.current);
+    if (createTimer.current) window.clearTimeout(createTimer.current);
+    if (downloadTimer.current) window.clearTimeout(downloadTimer.current);
+    setStatus({});
+    setActiveId("a1");
+    setPlaySeconds(seconds("12:34"));
+    setLooseQuote(null);
+    setThread([]);
+    setQuestion("");
+    setDraftOpen(false);
+    setFollowUp(followUpMessage);
+    setDownloadBusy(false);
+    setDownloadLabel("Download deck and files");
+    setRoster(people.map((person) => ({ ...person })));
+    setConsent(false);
+    setCreating(false);
+    setDeclined(false);
+    setSummaryReady(false);
+    setGateOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    showToast("Demo restarted");
+  };
+
+  const downloadFiles = () => {
+    if (downloadBusy) return;
+    setDownloadBusy(true);
+    setDownloadLabel("Preparing files…");
+    if (downloadTimer.current) window.clearTimeout(downloadTimer.current);
+    downloadTimer.current = window.setTimeout(() => {
+      setDownloadBusy(false);
+      setDownloadLabel("Download again");
+      showToast("Q4-Launch-Sync-files.zip downloaded (3 files, 5.4 MB)");
+    }, 1200);
+  };
+
+  const approvedCount = roster.filter((person) => person.approved).length;
+  const detailWho = looseQuote?.who ?? (active ? splitQuote(active).who : "");
+  const detailTime = looseQuote?.time ?? active?.time ?? "";
+
   const onDotKey = (event: KeyboardEvent<HTMLButtonElement | HTMLAnchorElement>, index: number) => {
     const next =
       event.key === "ArrowRight" || event.key === "ArrowDown"
@@ -165,9 +290,96 @@ export default function Team05Playground() {
             {meeting.when} · {meeting.duration} · {meeting.attendees} · {meeting.readTime}
           </Typography>
         </Box>
-        <Pill variant="orange">You missed this</Pill>
+        <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+          <Button variantType="tertiary" size="small" onClick={restart}>
+            ↺ Restart demo
+          </Button>
+          {summaryReady && <Pill variant="green">AI summary approved</Pill>}
+          <Pill variant="orange">You missed this</Pill>
+        </Box>
       </Box>
 
+      {gateOpen && (
+        <Tile orientation="vertical" borderVariant="caution" p={3}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start" flexWrap="wrap" gap={2}>
+            <Box flex="1">
+              <Typography variant="small" m={0} color="caution" textTransform="uppercase">
+                Approval needed
+              </Typography>
+              <Typography variant="h2">Approve an AI summary of this meeting</Typography>
+              <Typography variant="p" m={0} color="subtle">
+                Before any AI summary is created, every attendee has to approve it. Once everyone has approved, the
+                recording is processed to create your catch-up. The recording itself isn't shared any further.
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h2" m={0}>
+                {approvedCount} of 6
+              </Typography>
+              <Typography variant="small" m={0} color="subtle">
+                attendees approved
+              </Typography>
+            </Box>
+          </Box>
+          <Box display="grid" gridTemplateColumns={wide ? "1fr 1fr" : "1fr"} gap={1} mt={2}>
+            {roster.map((person) => (
+              <Box key={person.initials} display="flex" alignItems="center" gap={1} p={1}>
+                <Portrait
+                  size="S"
+                  initials={person.initials}
+                  alt={person.name}
+                  variant={person.approved ? "green" : "orange"}
+                />
+                <Typography variant="p" m={0}>
+                  {person.name}
+                </Typography>
+                <Typography variant="small" m={0} color={person.approved ? "positive" : "caution"}>
+                  {person.approved ? "Approved" : "Waiting for you"}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+          {creating && (
+            <Typography variant="p" color="subtle" aria-live="polite">
+              All 6 attendees have approved. Creating your summary…
+            </Typography>
+          )}
+          {declined && !creating && (
+            <Box mt={2}>
+              <Typography variant="p" m={0} color="subtle">
+                No AI summary will be created for this meeting. The other attendees won't see one either.
+              </Typography>
+              <Link onClick={() => setDeclined(false)}>Review again</Link>
+            </Box>
+          )}
+          {!creating && !declined && (
+            <Box mt={2}>
+              <Checkbox
+                id="consent"
+                name="consent"
+                checked={consent}
+                onChange={(event) => setConsent(event.target.checked)}
+                label="I approve AI processing of the Q4 Launch Sync recording to create summaries, actions and decisions."
+              />
+              <Box display="flex" alignItems="center" flexWrap="wrap" gap={2} mt={2}>
+                <Button variantType="primary" disabled={!consent} onClick={approve}>
+                  Approve and create summary
+                </Button>
+                <Link
+                  onClick={() => {
+                    setDeclined(true);
+                  }}
+                >
+                  Don't approve
+                </Link>
+              </Box>
+            </Box>
+          )}
+        </Tile>
+      )}
+
+      {!gateOpen && (
+      <Box display="flex" flexDirection="column" gap={3}>
       <Box>
         <Typography variant="small" m={0} color="positive" textTransform="uppercase">
           {meeting.eyebrow}
@@ -217,6 +429,9 @@ export default function Team05Playground() {
                     </Typography>
                     {entry.evidence && (
                       <Tile orientation="vertical" borderVariant="positive" p={2} mt={1}>
+                        <Typography variant="small" m={0} color="subtle" textTransform="uppercase">
+                          Evidence from the meeting
+                        </Typography>
                         <Typography variant="em" m={0}>
                           “{entry.evidence.text}”
                         </Typography>
@@ -281,7 +496,7 @@ export default function Team05Playground() {
               <Box
                 position="absolute"
                 top="8px"
-                left={`${(seconds(playTime) / durationSeconds) * 100}%`}
+                left={`${(playSeconds / durationSeconds) * 100}%`}
                 width="2px"
                 height="32px"
                 bg="var(--colorsUtilityYin090)"
@@ -332,9 +547,17 @@ export default function Team05Playground() {
             {looseQuote ? (
               <Box>
                 <Typography variant="strong" m={0}>
-                  At {playTime}
+                  At {looseQuote.time}
                 </Typography>
                 <Quote who={looseQuote.who} text={looseQuote.text} time={looseQuote.time} onJump={jumpTo} />
+                <ClipPlayer
+                  time={detailTime}
+                  who={detailWho}
+                  playing={clipTime === detailTime && !clipDone}
+                  done={clipDone && clipTime === detailTime}
+                  step={clipTime === detailTime ? clipStep : 0}
+                  onPlay={() => playClip(detailTime)}
+                />
               </Box>
             ) : active ? (
               <Box>
@@ -342,6 +565,14 @@ export default function Team05Playground() {
                   {active.title}
                 </Typography>
                 <Quote {...splitQuote(active)} onJump={jumpTo} />
+                <ClipPlayer
+                  time={detailTime}
+                  who={detailWho}
+                  playing={clipTime === detailTime && !clipDone}
+                  done={clipDone && clipTime === detailTime}
+                  step={clipTime === detailTime ? clipStep : 0}
+                  onPlay={() => playClip(detailTime)}
+                />
               </Box>
             ) : (
               <Typography variant="p" m={0}>
@@ -410,6 +641,30 @@ export default function Team05Playground() {
         />
       </Box>
 
+      <Tile orientation="vertical" p={3}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+          <Box flex="1">
+            <Typography variant="h3">Meeting deck and resources</Typography>
+            {files.map((file) => (
+              <Box key={file.name} display="flex" alignItems="center" gap={1} mb={1}>
+                <Pill variant="grey">{file.ext}</Pill>
+                <Typography variant="p" m={0}>
+                  {file.name}
+                </Typography>
+                <Typography variant="small" m={0} color="subtle">
+                  {file.size}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+          <Button variantType="primary" disabled={downloadBusy} onClick={downloadFiles}>
+            {downloadLabel}
+          </Button>
+        </Box>
+      </Tile>
+      </Box>
+      )}
+
       <Dialog
         open={draftOpen}
         onCancel={() => setDraftOpen(false)}
@@ -440,6 +695,50 @@ export default function Team05Playground() {
           </Button>
         </Box>
       </Dialog>
+    </Box>
+  );
+}
+
+function ClipPlayer({
+  time,
+  who,
+  playing,
+  done,
+  step,
+  onPlay,
+}: {
+  time: string;
+  who: string;
+  playing: boolean;
+  done: boolean;
+  step: number;
+  onPlay: () => void;
+}) {
+  const played = step / 50;
+  return (
+    <Box display="flex" alignItems="center" gap={1} mt={1}>
+      <Button
+        size="small"
+        variantType="primary"
+        aria-label={playing ? `Pause ${who}'s audio` : done ? `Replay ${who}'s audio from ${time}` : `Play ${who}'s audio from ${time}`}
+        onClick={onPlay}
+      >
+        {playing ? "❚❚" : done ? "↺" : "▶"}
+      </Button>
+      <Box display="flex" alignItems="flex-end" gap="2px" flex="1" height="24px" aria-hidden="true">
+        {waveBars.map((bar, index) => (
+          <Box
+            key={`${time}-${index}`}
+            width="3px"
+            height={`${bar + 4}px`}
+            borderRadius="borderRadius025"
+            bg={index / waveBars.length < played ? accent : grey}
+          />
+        ))}
+      </Box>
+      <Typography variant="small" m={0} color="subtle">
+        0:0{Math.min(5, Math.floor(played * 5))} / 0:05
+      </Typography>
     </Box>
   );
 }

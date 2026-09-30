@@ -161,6 +161,25 @@ export function seconds(time: string) {
   return minutes * 60 + rest;
 }
 
+export type Person = { initials: string; name: string; approved: boolean };
+
+export const people: Person[] = [
+  { initials: "PS", name: "Priya Shah", approved: true },
+  { initials: "MO", name: "Marcus Obi", approved: true },
+  { initials: "JM", name: "Jess Moore", approved: true },
+  { initials: "LW", name: "Leo Walsh", approved: true },
+  { initials: "AK", name: "Aisha Khan", approved: true },
+  { initials: "SP", name: "Sam Patel (you)", approved: false },
+];
+
+export const files = [
+  { ext: "PPTX", name: "Q4 launch sync deck", size: "4.2 MB" },
+  { ext: "PDF", name: "Pricing test results (Option A vs B)", size: "1.1 MB" },
+  { ext: "TXT", name: "Full meeting transcript", size: "86 KB" },
+];
+
+export const waveBars = [4, 7, 11, 6, 14, 9, 16, 12, 8, 15, 10, 6, 13, 17, 9, 5, 12, 15, 8, 11, 14, 7, 10, 16, 9, 6, 12, 8, 5, 10];
+
 export function quoteAt(time: string): Evidence | undefined {
   for (const answer of answers) {
     const found = answer.ev.find((entry) => entry.time === time);
