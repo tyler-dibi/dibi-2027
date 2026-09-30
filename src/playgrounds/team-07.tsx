@@ -181,10 +181,10 @@ export default function Team07Playground() {
           <Box key={person.initials} display="flex" gap={1} alignItems="center">
             <Portrait initials={person.initials} size="M" />
             <Box>
-              <Typography variant="strong" m={0}>
+              <Typography variant="strong" display="block" m={0}>
                 {person.name}
               </Typography>
-              <Typography variant="small" color="subtle" m={0}>
+              <Typography variant="small" color="subtle" display="block" m={0}>
                 {person.role}
               </Typography>
             </Box>
@@ -239,16 +239,14 @@ export default function Team07Playground() {
               {decisions.map((decision, index) => (
                 <Box key={decision.title} display="flex" flexDirection="column" gap={2}>
                   {index > 0 ? <Divider /> : null}
-                  <Box display="flex" justifyContent="space-between" gap={2} alignItems="flex-start">
-                    <Box>
-                      <Typography variant="strong" m={0}>
-                        {decision.title}
-                      </Typography>
-                      <Typography variant="small" color="subtle" m={0}>
-                        {decision.detail}
-                      </Typography>
-                    </Box>
+                  <Box display="flex" flexDirection="column" gap={1} alignItems="flex-start">
                     <Pill variant="green">Decided</Pill>
+                    <Typography variant="strong" display="block" m={0}>
+                      {decision.title}
+                    </Typography>
+                    <Typography variant="small" color="subtle" display="block" m={0}>
+                      {decision.detail}
+                    </Typography>
                   </Box>
                 </Box>
               ))}
