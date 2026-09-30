@@ -378,7 +378,7 @@ export default function Team07Playground() {
         </Box>
       ) : (
         <Message variant="warning" title="AI summary held">
-          The one-minute summary is hidden until Priya Nair in Legal approves the draft above.
+          The one-minute summary is hidden until Priya Nair in Legal approves it.
         </Message>
       )}
 
