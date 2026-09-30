@@ -15,6 +15,7 @@ import {
 import Message from "carbon-react/lib/components/message";
 import Pill from "carbon-react/lib/components/pill";
 import Portrait from "carbon-react/lib/components/portrait";
+import Textarea from "carbon-react/lib/components/textarea";
 import Textbox from "carbon-react/lib/components/textbox";
 import { Tile, TileContent } from "carbon-react/lib/components/tile";
 import Typography from "carbon-react/lib/components/typography";
@@ -27,6 +28,13 @@ type Answer = {
   title: string;
   text: string;
   variant: "ai" | "warning";
+};
+
+type Approval = "pending" | "approved" | "returned";
+
+const oneMinute = {
+  headline: "The October VAT return is on. Receipt capture is off. You have one email to review.",
+  body: "The return goes out on 16 October. Live filing stays off until Finance signs off the HMRC sandbox. Receipt capture is paused until November, so it is out of this release. Your only job is to review the accountant email by Friday 2 October.",
 };
 
 const people = [
@@ -146,13 +154,52 @@ export default function Team07Playground() {
   const [done, setDone] = useState<Record<string, boolean>>({});
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
+  const [approval, setApproval] = useState<Approval>("pending");
+  const [legalNote, setLegalNote] = useState("");
+  const [savedNote, setSavedNote] = useState("");
+  const [noteNeeded, setNoteNeeded] = useState(false);
 
   const openCount = actions.filter((action) => !done[action.id]).length;
   const yoursDone = Boolean(done.email);
+  const summaryReleased = approval === "approved";
 
   const ask = (next: string) => {
     setQuestion(next);
+    if (!summaryReleased) {
+      setAnswer({
+        variant: "warning",
+        title: "Waiting for Legal",
+        text: "Legal has not approved the AI summary, so answers from the recording stay hidden.",
+      });
+      return;
+    }
     setAnswer(replyFor(next));
+  };
+
+  const approveSummary = () => {
+    setSavedNote(legalNote.trim());
+    setNoteNeeded(false);
+    setApproval("approved");
+    setAnswer(null);
+  };
+
+  const sendBack = () => {
+    const note = legalNote.trim();
+    if (!note) {
+      setNoteNeeded(true);
+      return;
+    }
+    setSavedNote(note);
+    setNoteNeeded(false);
+    setApproval("returned");
+    setAnswer(null);
+  };
+
+  const resubmit = () => {
+    setLegalNote("");
+    setNoteNeeded(false);
+    setApproval("pending");
+    setAnswer(null);
   };
 
   return (
@@ -160,14 +207,21 @@ export default function Team07Playground() {
       <Box display="flex" flexDirection="column" gap={1}>
         <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
           <Pill variant="orange">Missed</Pill>
-          <Pill variant="blue">1 minute read</Pill>
+          {summaryReleased ? <Pill variant="blue">1 minute read</Pill> : null}
+          <Pill variant={approval === "approved" ? "green" : approval === "returned" ? "red" : "orange"}>
+            {approval === "approved" ? "Approved by Legal" : approval === "returned" ? "Sent back by Legal" : "Awaiting legal approval"}
+          </Pill>
           <Pill variant="green">3 decisions</Pill>
           <Pill variant={yoursDone ? "green" : "orange"}>{yoursDone ? "Your action is done" : "1 action for you"}</Pill>
         </Box>
         <Typography variant="h1" m={0}>
           Catch-up
         </Typography>
-        <Typography m={0}>You missed the meeting. This is the one-minute version.</Typography>
+        <Typography m={0}>
+          {summaryReleased
+            ? "You missed the meeting. This is the one-minute version."
+            : "You missed the meeting. The AI summary stays with Legal until it is approved."}
+        </Typography>
         <Typography variant="strong" m={0}>
           Making Tax Digital standup
         </Typography>
@@ -193,26 +247,118 @@ export default function Team07Playground() {
         ))}
       </Box>
 
-      <Box
-        p={3}
-        bg="var(--colorsActionMajor500)"
-        borderRadius="borderRadius100"
-        display="flex"
-        flexDirection="column"
-        gap={1}
-      >
-        <Typography variant="small" inverse m={0}>
-          One minute
-        </Typography>
-        <Typography variant="h3" inverse m={0}>
-          The October VAT return is on. Receipt capture is off. You have one email to review.
-        </Typography>
-        <Typography inverse m={0}>
-          The return goes out on 16 October. Live filing stays off until Finance signs off the HMRC sandbox. Receipt
-          capture is paused until November, so it is out of this release. Your only job is to review the accountant
-          email by Friday 2 October.
-        </Typography>
-      </Box>
+      <Tile orientation="vertical">
+        <TileContent>
+          <Box display="flex" flexDirection="column" gap={2}>
+            <Box display="flex" gap={2} alignItems="center" justifyContent="space-between" flexWrap="wrap">
+              <Box display="flex" gap={1} alignItems="center">
+                <Portrait initials="PN" size="M" />
+                <Box>
+                  <Typography variant="h2" display="block" m={0}>
+                    Legal approval
+                  </Typography>
+                  <Typography variant="small" color="subtle" display="block" m={0}>
+                    Priya Nair · Legal
+                  </Typography>
+                </Box>
+              </Box>
+              <Pill variant={approval === "approved" ? "green" : approval === "returned" ? "red" : "orange"}>
+                {approval === "approved" ? "Approved" : approval === "returned" ? "Sent back" : "Awaiting approval"}
+              </Pill>
+            </Box>
+            {summaryReleased ? (
+              <Message variant="success" title="Legal approved this AI summary">
+                Priya Nair approved it on 30 September 2026.
+                {savedNote ? ` Note: ${savedNote}` : " The one-minute summary is now released."}
+              </Message>
+            ) : (
+              <Message variant={approval === "returned" ? "error" : "warning"} title="Not released">
+                Legal will not allow this AI summary until it has been approved. Decisions and action items stay
+                available.
+                {approval === "returned" ? ` Sent back: ${savedNote}` : ""}
+              </Message>
+            )}
+            {summaryReleased ? (
+              <Button
+                variantType="tertiary"
+                size="small"
+                onClick={() => {
+                  setApproval("pending");
+                  setAnswer(null);
+                }}
+              >
+                Remove approval
+              </Button>
+            ) : (
+              <Box display="flex" flexDirection="column" gap={2}>
+                <Box p={2} bg="var(--colorsUtilityMajor025)" borderRadius="borderRadius100" display="flex" flexDirection="column" gap={1}>
+                  <Typography variant="small" color="subtle" display="block" m={0}>
+                    Draft for review. Not released.
+                  </Typography>
+                  <Typography variant="strong" display="block" m={0}>
+                    {oneMinute.headline}
+                  </Typography>
+                  <Typography display="block" m={0}>
+                    {oneMinute.body}
+                  </Typography>
+                </Box>
+                {approval === "returned" ? (
+                  <Button variantType="primary" onClick={resubmit}>
+                    Resubmit for approval
+                  </Button>
+                ) : (
+                  <Box display="flex" flexDirection="column" gap={2}>
+                    <Textarea
+                      label="Note for the team"
+                      inputHint="Required if you send this back."
+                      rows={3}
+                      value={legalNote}
+                      onChange={(event) => {
+                        setLegalNote(event.target.value);
+                        if (event.target.value.trim()) setNoteNeeded(false);
+                      }}
+                      error={noteNeeded ? "Add a note to explain what Legal needs changed." : undefined}
+                    />
+                    <Box display="flex" gap={1} flexWrap="wrap">
+                      <Button variantType="primary" iconType="tick" onClick={approveSummary}>
+                        Approve summary
+                      </Button>
+                      <Button variant="destructive" onClick={sendBack}>
+                        Send back
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Box>
+        </TileContent>
+      </Tile>
+
+      {summaryReleased ? (
+        <Box
+          p={3}
+          bg="var(--colorsActionMajor500)"
+          borderRadius="borderRadius100"
+          display="flex"
+          flexDirection="column"
+          gap={1}
+        >
+          <Typography variant="small" inverse m={0}>
+            One minute
+          </Typography>
+          <Typography variant="h3" inverse m={0}>
+            {oneMinute.headline}
+          </Typography>
+          <Typography inverse m={0}>
+            {oneMinute.body}
+          </Typography>
+        </Box>
+      ) : (
+        <Message variant="warning" title="AI summary held">
+          The one-minute summary is hidden until Priya Nair in Legal approves the draft above.
+        </Message>
+      )}
 
       <Box display="grid" gridTemplateColumns="repeat(2, minmax(0, 1fr))" gap={3}>
         <Tile orientation="vertical">
@@ -220,13 +366,19 @@ export default function Team07Playground() {
             <Typography variant="h2" m={0}>
               Meeting summary
             </Typography>
-            <Typography variant="ul">
-              {summary.map((point) => (
-                <Typography as="li" key={point}>
-                  {point}
-                </Typography>
-              ))}
-            </Typography>
+            {summaryReleased ? (
+              <Typography variant="ul">
+                {summary.map((point) => (
+                  <Typography as="li" key={point}>
+                    {point}
+                  </Typography>
+                ))}
+              </Typography>
+            ) : (
+              <Typography color="subtle" m={0}>
+                Hidden until Legal approves the AI summary.
+              </Typography>
+            )}
           </TileContent>
         </Tile>
 
@@ -312,21 +464,41 @@ export default function Team07Playground() {
                 Ask the recording
               </Typography>
               <Typography variant="small" color="subtle" m={0}>
-                One question, answered from the Teams transcript.
+                {summaryReleased
+                  ? "One question, answered from the Teams transcript."
+                  : "Questions stay closed until Legal approves the AI summary."}
               </Typography>
             </Box>
+            {summaryReleased ? null : (
+              <Message variant="warning" title="Waiting for Legal">
+                Ask the recording after the summary is approved.
+              </Message>
+            )}
             <Textbox
               label="Your question"
               inputHint="Ask in your own words, or use a suggestion."
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
+              disabled={!summaryReleased}
             />
             <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-              <Button variant="gradient" variantType="primary" iconType="chat" onClick={() => ask(question)}>
+              <Button
+                variant="gradient"
+                variantType="primary"
+                iconType="chat"
+                onClick={() => ask(question)}
+                disabled={!summaryReleased}
+              >
                 Ask
               </Button>
               {suggestions.map((suggestion) => (
-                <Button key={suggestion} variantType="tertiary" size="small" onClick={() => ask(suggestion)}>
+                <Button
+                  key={suggestion}
+                  variantType="tertiary"
+                  size="small"
+                  onClick={() => ask(suggestion)}
+                  disabled={!summaryReleased}
+                >
                   {suggestion}
                 </Button>
               ))}
