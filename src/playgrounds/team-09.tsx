@@ -44,11 +44,6 @@ type View =
 
 type Filter = "all" | "waiting" | "checked-in";
 
-type LastScan = {
-  text: string;
-  tone: "success" | "error";
-};
-
 const SCREENS: { id: View; label: string }[] = [
   { id: "ticket-email", label: "1. Ticket email" },
   { id: "welcome-email", label: "2. Welcome email" },
@@ -267,13 +262,22 @@ function PersonButton({ attendee, onOpen }: { attendee: Attendee; onOpen: (id: s
       aria-label={`${attendee.name}, ${attendee.company}, ${attendee.checkedIn ? "checked in" : "waiting"}`}
     >
       <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} width="100%">
-        <Box display="flex" flexDirection="column" alignItems="flex-start">
-          <Typography variant="strong" m={0}>
-            {attendee.name}
-          </Typography>
-          <Typography variant="small" m={0}>
-            {attendee.company}
-          </Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Portrait
+            size="S"
+            shape="circle"
+            iconType={attendee.checkedIn ? "tick" : "clock"}
+            variant={attendee.checkedIn ? "green" : "gray"}
+            alt=""
+          />
+          <Box display="flex" flexDirection="column" alignItems="flex-start">
+            <Typography variant="strong" m={0}>
+              {attendee.name}
+            </Typography>
+            <Typography variant="small" m={0}>
+              {attendee.company}
+            </Typography>
+          </Box>
         </Box>
         <StatusPill checkedIn={attendee.checkedIn} />
       </Box>
@@ -288,7 +292,6 @@ export default function Team09Playground() {
   const [resolveQuery, setResolveQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [lastScan, setLastScan] = useState<LastScan | null>(null);
 
   const checkedInCount = attendees.filter((attendee) => attendee.checkedIn).length;
   const selected = attendees.find((attendee) => attendee.id === selectedId) ?? null;
@@ -333,14 +336,8 @@ export default function Team09Playground() {
     if (next === "success") {
       checkIn(PRIYA_ID);
       setSelectedId(PRIYA_ID);
-      setLastScan({ text: "Priya Shah checked in", tone: "success" });
     } else if (next === "already") {
       setSelectedId(JAMES_ID);
-      setLastScan({ text: "James Okonkwo already checked in", tone: "error" });
-    } else if (next === "unreadable") {
-      setLastScan({ text: "Code could not be read", tone: "error" });
-    } else if (next === "wrong-event") {
-      setLastScan({ text: "Ticket not for this event", tone: "error" });
     } else if (next === "search") {
       setListQuery("Priya");
       setFilter("all");
@@ -366,7 +363,6 @@ export default function Team09Playground() {
       if (target) {
         checkIn(target.id);
         setSelectedId(target.id);
-        setLastScan({ text: `${target.name} checked in manually`, tone: "success" });
       }
     }
     setView(next);
@@ -375,20 +371,17 @@ export default function Team09Playground() {
   const scanPriya = () => {
     if (priya?.checkedIn) {
       setSelectedId(PRIYA_ID);
-      setLastScan({ text: "Priya Shah already checked in", tone: "error" });
       setView("already");
       return;
     }
     checkIn(PRIYA_ID);
     setSelectedId(PRIYA_ID);
-    setLastScan({ text: "Priya Shah checked in", tone: "success" });
     setView("success");
   };
 
   const confirmManual = () => {
     if (!selected || selected.checkedIn) return;
     checkIn(selected.id);
-    setLastScan({ text: `${selected.name} checked in manually`, tone: "success" });
     setView("manual-done");
   };
 
@@ -398,7 +391,6 @@ export default function Team09Playground() {
     setResolveQuery("");
     setFilter("all");
     setSelectedId(null);
-    setLastScan(null);
     setView("scanner");
   };
 
@@ -548,15 +540,9 @@ export default function Team09Playground() {
                           Camera on
                         </Pill>
                       </Box>
-                      {lastScan ? (
-                        <Message variant={lastScan.tone === "success" ? "success" : "error"}>
-                          Last result: {lastScan.text}
-                        </Message>
-                      ) : (
-                        <Typography variant="small" color="subtle" m={0}>
-                          Results show the moment a code is read. You do not confirm each one.
-                        </Typography>
-                      )}
+                      <Typography variant="small" color="subtle" m={0}>
+                        Results show the moment a code is read. You do not confirm each one.
+                      </Typography>
                     </Box>
                   ) : null}
 
