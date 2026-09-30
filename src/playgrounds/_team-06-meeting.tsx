@@ -57,7 +57,7 @@ Priya Shah: That's the lot. I'll circulate these notes once Jen has had a look.
 `;
 
 const DECISION_RE = /\b(we agreed|we decided|decision:|we will not|we'll not|no change until)\b/i;
-const SKIP_RE = /\b(is off this morning|i'll keep it to|that(?:'s| is) the lot|once .+ has had a look)\b/i;
+const SKIP_RE = /\b(is off this morning|i'll keep it to|that(?:'s| is) the lot|once .+ has had a look|^thanks for jumping)\b/i;
 const NOT_A_SPEAKER = /^(decision|action|note|summary)$/i;
 
 function finish(value: string): string {
@@ -90,6 +90,10 @@ function formatClock(seconds: number): string {
 }
 
 function splitSpeaker(text: string): { speaker: string; body: string } {
+  const voice = text.match(/^<v\s+([^>]+)>\s*([\s\S]*?)(?:<\/v>)?$/i);
+  if (voice?.[1] && voice[2]) {
+    return { speaker: voice[1].trim(), body: voice[2].trim() };
+  }
   const match = text.match(/^([A-Z][A-Za-z.'’-]+(?: [A-Z][A-Za-z.'’-]+){0,2}):\s+([\s\S]+)$/);
   if (!match || NOT_A_SPEAKER.test(match[1])) {
     return { speaker: "Speaker", body: text.trim() };
@@ -275,6 +279,11 @@ function findActions(cues: Cue[], you: string): ActionItem[] {
           clause = clause.replace(/disputed lines/i, "disputed lines on the invoice run");
         }
         add(clause);
+        continue;
+      }
+      if (cue.speaker.toLowerCase() === you.toLowerCase()) {
+        const own = sentence.match(/\bI need to (.+)/i);
+        if (own?.[1]) add(own[1]);
       }
     }
   }
@@ -294,12 +303,75 @@ function titleFromSource(sourceName: string): string {
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
+export const DEMO_TRANSCRIPT = `WEBVTT - Design System File Upload Kickoff
+
+00:00:00.000 --> 00:00:05.100
+<v Sarah>Morning everyone. Thanks for jumping on. Quick agenda today: we need to finalize the spec for adding a universal File Upload component to our design system.
+
+00:00:05.100 --> 00:00:11.800
+<v Sarah>We've had a dozen product teams build custom uploaders, and it's creating a mess with accessibility and visual consistency. Jen, where are we with design?
+
+00:00:11.800 --> 00:00:19.400
+<v Jen>I've got high-fidelity Figma specs ready for single-file, multi-file, and drag-and-drop states.
+
+00:00:19.400 --> 00:00:26.900
+<v Jen>But I need to double-check error handling states—like max file size or unsupported formats—and align with Elena on accessibility standards.
+
+00:00:26.900 --> 00:00:34.200
+<v Elena>Yeah, drag-and-drop accessibility is notoriously tricky for keyboard-only and screen reader users.
+
+00:00:34.200 --> 00:00:41.500
+<v Elena>We need to make sure there's always a standard button fall-back and live regions for upload status updates. I can write the full WCAG guidelines for this.
+
+00:00:41.500 --> 00:00:48.000
+<v Marcus>On the engineering side, I've started spiking the React implementation.
+
+00:00:48.000 --> 00:00:55.300
+<v Marcus>We need to decide if the base component handles chunking and file preview thumbnails, or if we leave media handling to the consuming applications.
+
+00:00:55.300 --> 00:01:00.100
+<v Marcus>I'll map out the API props and state management by Friday.
+
+00:01:00.100 --> 00:01:06.800
+<v Sarah>Perfect. I'll make sure the product documentation outlines clear guidelines on when teams should use a simple file input versus the full drag-and-drop area.
+
+00:01:06.800 --> 00:01:12.000
+<v Sarah>Let's make sure everyone has their action items locked down before our next review.
+`;
+
+export function wellbeingSummary(brief: MeetingBrief): string[] {
+  const yours = brief.cues.filter((cue) => cue.speaker.toLowerCase() === brief.you.toLowerCase());
+  const youSaid = yours.map((cue) => cue.text).join(" ");
+  const everyone = brief.cues.map((cue) => cue.text).join(" ");
+  const points: string[] = [];
+  if (/ready|prepared|specs/i.test(youSaid)) {
+    points.push("You came in prepared. The specs were ready, and you could answer without scrambling.");
+  }
+  if (/need to|double-check|error/i.test(youSaid)) {
+    points.push("You named the gap yourself, so you were not caught out in the room.");
+  }
+  if (/accessibility|elena/i.test(youSaid) && /i can write|guidelines/i.test(everyone)) {
+    points.push("Elena offered to take the WCAG guidelines, so accessibility is not sitting with you alone.");
+  }
+  if (/perfect|thanks for jumping/i.test(everyone)) {
+    points.push("The tone stayed constructive. Nobody pushed back on your design.");
+  }
+  if (/locked down|next review/i.test(everyone)) {
+    points.push("There is some pace to watch: actions are due before the next review, and engineering is waiting on the error states.");
+  }
+  if (points.length === 0) {
+    points.push("There is not enough in your own words to say how this meeting felt. Your lines are short, and nobody challenged you directly.");
+  }
+  return points.slice(0, 5);
+}
+
 export function buildBrief(transcript: string, sourceName: string, videoName?: string): MeetingBrief {
   const cues = parseTranscript(transcript);
   const speakers = [...new Set(cues.map((cue) => cue.speaker))].filter((speaker) => speaker !== "Speaker");
   const attendees = speakers.filter((speaker) => !speaker.toLowerCase().startsWith(YOU.toLowerCase()));
+  const header = transcript.match(/^WEBVTT\s*-\s*(.+)$/im);
   return {
-    title: titleFromSource(sourceName),
+    title: header?.[1]?.trim() || titleFromSource(sourceName),
     whenLabel: "Uploaded just now",
     you: YOU,
     sourceName,

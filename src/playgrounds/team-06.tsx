@@ -21,11 +21,13 @@ import Typography from "carbon-react/lib/components/typography";
 import {
   answerQuestion,
   buildBrief,
+  DEMO_TRANSCRIPT,
   isVideoFile,
   jiraDraft,
   refreshFromCues,
   sampleBrief,
   stitchLabel,
+  wellbeingSummary,
   type ActionItem,
   type MeetingBrief,
 } from "./_team-06-meeting";
@@ -65,6 +67,7 @@ export default function Team06Playground() {
   const [jiraKeys, setJiraKeys] = useState<Record<string, string>>({});
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [followUpBooked, setFollowUpBooked] = useState(false);
+  const [pasted, setPasted] = useState(DEMO_TRANSCRIPT);
 
   const reset = () => {
     setPhase("upload");
@@ -90,6 +93,7 @@ export default function Team06Playground() {
     setJiraKeys({});
     setFollowUpOpen(false);
     setFollowUpBooked(false);
+    setPasted(DEMO_TRANSCRIPT);
   };
 
   const showBrief = (next: MeetingBrief) => {
@@ -158,6 +162,21 @@ export default function Team06Playground() {
       return;
     }
     readTranscript(file, videoName || undefined);
+  };
+
+  const usePasted = () => {
+    if (!approved || !pasted.trim()) return;
+    setPhase("reading");
+    setError("");
+    window.setTimeout(() => {
+      const next = buildBrief(pasted, "pasted-transcript.vtt", videoName || undefined);
+      if (next.cues.length === 0) {
+        setPhase("upload");
+        setError("That text had no transcript in it. Keep the timestamps and speaker lines.");
+        return;
+      }
+      showBrief(next);
+    }, 700);
   };
 
   const onApprove = (checked: boolean) => {
@@ -245,7 +264,7 @@ export default function Team06Playground() {
                 Start with a recording
               </Typography>
               <Typography m={0}>
-                Upload a transcript, or a video and then its transcript. The summary, decisions and your actions are built from that file.
+                The demo transcript is already in the box. Approve it, then use that text. You can still upload a file instead.
               </Typography>
               <Message variant="warning" title="Disclaimer">
                 AI summaries are not processed until you approve them. Tick the box below before a summary, decisions or actions are created from this recording.
@@ -270,7 +289,18 @@ export default function Team06Playground() {
               {phase === "reading" ? (
                 <Loader variant="ai" loaderLabel="Reading the transcript" showLabel />
               ) : (
-                <FileInput
+                <>
+                  <Textarea
+                    label="Transcript"
+                    inputHint="Paste a transcript here. The design-system kickoff is filled in for the demo."
+                    value={pasted}
+                    rows={8}
+                    onChange={(event) => setPasted(event.target.value)}
+                  />
+                  <Button variantType="primary" fullWidth iconType="play" disabled={!approved || !pasted.trim()} onClick={usePasted}>
+                    Use this transcript
+                  </Button>
+                  <FileInput
                   key={uploadKey}
                   label="Upload a transcript or video"
                   inputHint="TXT, VTT or SRT transcript, or an MP4 recording."
@@ -280,6 +310,7 @@ export default function Team06Playground() {
                   isVertical
                   onChange={onFiles}
                 />
+                </>
               )}
               <Button
                 variantType="secondary"
@@ -332,6 +363,26 @@ export default function Team06Playground() {
                   ) : (
                     <Typography m={0}>Nothing in that transcript could be summarised in five points.</Typography>
                   )}
+                </Box>
+              </Tile>
+            </Box>
+
+            <Box id="wellbeing">
+              <Tile orientation="vertical" p={3} width="100%">
+                <Box display="flex" flexDirection="column" gap={2}>
+                  <Typography variant="h3" m={0}>
+                    Wellbeing summary
+                  </Typography>
+                  <Typography color="subtle" m={0}>
+                    How did the meeting go for you?
+                  </Typography>
+                  <Typography variant="ul" m={0}>
+                    {wellbeingSummary(brief).map((item) => (
+                      <Typography key={item} as="li" mb={1}>
+                        {item}
+                      </Typography>
+                    ))}
+                  </Typography>
                 </Box>
               </Tile>
             </Box>
