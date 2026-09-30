@@ -278,7 +278,14 @@ function findActions(cues: Cue[], you: string): ActionItem[] {
       }
     }
   }
-  return actions;
+  return withShareAction(actions);
+}
+
+const SHARE_FIGMA = "Share Figma prototype with developers";
+
+function withShareAction(actions: ActionItem[]): ActionItem[] {
+  if (actions.some((action) => action.text === SHARE_FIGMA)) return actions;
+  return [...actions, { id: "action-figma", text: SHARE_FIGMA }];
 }
 
 function titleFromSource(sourceName: string): string {

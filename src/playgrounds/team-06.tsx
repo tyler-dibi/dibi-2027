@@ -442,17 +442,19 @@ export default function Team06Playground() {
                       const label = stitchLabel(action.text);
                       return (
                         <Box key={action.id} display="flex" flexDirection="column" gap={1}>
-                          <Checkbox
-                            name={action.id}
-                            label={action.text}
-                            checked={Boolean(done[action.text])}
-                            onChange={(event) => setDone({ ...done, [action.text]: event.target.checked })}
-                          />
+                          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+                            <Checkbox
+                              name={action.id}
+                              label={action.text}
+                              checked={Boolean(done[action.text])}
+                              onChange={(event) => setDone({ ...done, [action.text]: event.target.checked })}
+                            />
+                            <Button variantType="secondary" size="small" iconType="print" onClick={() => setPrintAction(action)}>
+                              Print
+                            </Button>
+                          </Box>
                           <Image src={label.src} alt={action.text} width="100%" height={`${label.height}px`} />
                           {queued[action.text] && <Pill variant="green">Queued</Pill>}
-                          <Button variantType="secondary" iconType="print" fullWidth onClick={() => setPrintAction(action)}>
-                            Print
-                          </Button>
                         </Box>
                       );
                     })
