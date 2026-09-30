@@ -52,6 +52,18 @@ const OPEN_MINUTE = 8 * 60;
 const START_MINUTE = 9 * 60 + 15;
 const KEYNOTE_MINUTE = 10 * 60 + 30;
 const SUCCESS_HOLD_SECONDS = 8;
+const LIST_SAVED_AT = "07:45";
+const STORAGE_KEY = "team-10-door-a";
+
+type DoorSnapshot = {
+  attendees: Attendee[];
+  count: number;
+  minute: number;
+  recent: Recent[];
+  held: Held[];
+  queueIndex: number;
+  pending: number;
+};
 
 const TICKET_VARIANT = {
   "Full conference": "blue",
@@ -85,6 +97,43 @@ const INITIAL_RECENT: Recent[] = [
   { id: "ben", name: "Ben Carter", time: "08:40", note: "Full conference" },
   { id: "ravi", name: "Ravi Patel", time: "08:04", note: "Speaker" },
 ];
+
+function freshSnapshot(): DoorSnapshot {
+  return {
+    attendees: ATTENDEES.map((person) => ({ ...person })),
+    count: START_COUNT,
+    minute: START_MINUTE,
+    recent: INITIAL_RECENT.map((item) => ({ ...item })),
+    held: [],
+    queueIndex: 0,
+    pending: START_COUNT,
+  };
+}
+
+function isSnapshot(value: unknown): value is DoorSnapshot {
+  if (!value || typeof value !== "object") return false;
+  const snapshot = value as DoorSnapshot;
+  return (
+    Array.isArray(snapshot.attendees) &&
+    Array.isArray(snapshot.recent) &&
+    Array.isArray(snapshot.held) &&
+    typeof snapshot.count === "number" &&
+    typeof snapshot.minute === "number" &&
+    typeof snapshot.queueIndex === "number" &&
+    typeof snapshot.pending === "number"
+  );
+}
+
+function loadSnapshot(): DoorSnapshot {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return freshSnapshot();
+    const parsed: unknown = JSON.parse(raw);
+    return isSnapshot(parsed) ? parsed : freshSnapshot();
+  } catch {
+    return freshSnapshot();
+  }
+}
 
 function formatTime(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
@@ -159,8 +208,8 @@ function Finder({
         onChange={(event) => onQuery(event.target.value)}
       />
       {term.length >= 2 && matches.length === 0 && (
-        <Message variant="warning" title="No one on today's list">
-          Try another spelling, or send them to registration.
+        <Message variant="warning" title="No one on the saved list">
+          Try another spelling, or send them to registration. The search is on this iPad.
         </Message>
       )}
       {visible.map((person) => {
@@ -204,12 +253,14 @@ function Finder({
 }
 
 export default function Team10Playground() {
-  const [attendees, setAttendees] = useState(() => ATTENDEES.map((person) => ({ ...person })));
-  const [count, setCount] = useState(START_COUNT);
-  const [minute, setMinute] = useState(START_MINUTE);
-  const [recent, setRecent] = useState(() => INITIAL_RECENT.map((item) => ({ ...item })));
-  const [held, setHeld] = useState<Held[]>([]);
-  const [queueIndex, setQueueIndex] = useState(0);
+  const [stored] = useState(loadSnapshot);
+  const [attendees, setAttendees] = useState(stored.attendees);
+  const [count, setCount] = useState(stored.count);
+  const [minute, setMinute] = useState(stored.minute);
+  const [recent, setRecent] = useState(stored.recent);
+  const [held, setHeld] = useState(stored.held);
+  const [queueIndex, setQueueIndex] = useState(stored.queueIndex);
+  const [pending, setPending] = useState(stored.pending);
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
   const [printed, setPrinted] = useState(false);
@@ -246,6 +297,7 @@ export default function Team10Playground() {
       attendeesRef.current = next;
       setAttendees(next);
       setCount((value) => value + 1);
+      setPending((value) => value + 1);
       setRecent((items) => [{ id, name: person.name, time, note: person.ticket, session: true }, ...items].slice(0, 5));
       setQuery("");
       setNotice(null);
@@ -311,6 +363,15 @@ export default function Team10Playground() {
     setPrinted(false);
   }, [phase]);
 
+  useEffect(() => {
+    const snapshot: DoorSnapshot = { attendees, count, minute, recent, held, queueIndex, pending };
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    } catch {
+      // This session still runs if the iPad cannot store any more.
+    }
+  }, [attendees, count, minute, recent, held, queueIndex, pending]);
+
   const remaining = Math.max(0, TARGET - count);
   const minutesToKeynote = Math.max(0, KEYNOTE_MINUTE - minute);
   const elapsed = Math.max(1, minute - OPEN_MINUTE);
@@ -333,12 +394,13 @@ export default function Team10Playground() {
   const sendAway = (where: "cash desk" | "registration", person?: Attendee) => {
     const time = takeTime();
     setHeld((items) => [{ id: person?.id, name: person?.name ?? "Unrecognised badge", where, time }, ...items]);
+    setPending((value) => value + 1);
     setQuery("");
     setPhase({ name: "ready" });
     setNotice({
       variant: "info",
       title: person ? `${person.name} sent to ${where}` : `Sent to ${where}`,
-      body: "They're out of this queue. Scan the next badge.",
+      body: "Their name is saved on this iPad. Walk them to the desk, then scan the next badge.",
     });
   };
 
@@ -360,12 +422,13 @@ export default function Team10Playground() {
     attendeesRef.current = next;
     setAttendees(next);
     setCount((value) => Math.max(0, value - 1));
+    setPending((value) => Math.max(0, value - 1));
     setRecent((items) => items.filter((item) => !(item.id === id && item.time === time)));
     setPhase({ name: "ready" });
     setNotice({
       variant: "warning",
       title: `Check-in cancelled for ${person.name}`,
-      body: "They're not marked as in. Scan them again when they're at the door.",
+      body: "Removed from this iPad. Scan them again when they're at the door.",
     });
   };
 
@@ -379,6 +442,7 @@ export default function Team10Playground() {
     setRecent(INITIAL_RECENT.map((item) => ({ ...item })));
     setHeld([]);
     setQueueIndex(0);
+    setPending(START_COUNT);
     setQuery("");
     setNotice(null);
     setPrinted(false);
@@ -403,7 +467,10 @@ export default function Team10Playground() {
           </Typography>
         </Box>
         <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
-          <Box display="flex" alignItems="center" gap={1}>
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <Pill variant="slate" fill>
+              Offline
+            </Pill>
             <Pill variant={ahead ? "green" : "orange"} fill>
               {ahead ? "Ahead" : "Behind"}
             </Pill>
@@ -418,6 +485,10 @@ export default function Team10Playground() {
           </Typography>
         </Box>
       </Box>
+
+      <Message variant="info" title="No wifi. This door works from the iPad.">
+        {`The list of ${TARGET} people was saved here at ${LIST_SAVED_AT}. Scanning and name search use that list. ${pending} updates are stored on this iPad and will upload when wifi is back.`}
+      </Message>
 
       <ProgressTracker
         progress={Math.min(100, Math.round((count / TARGET) * 100))}
@@ -444,7 +515,7 @@ export default function Team10Playground() {
                 Ready for the next badge
               </Typography>
               <Typography m={0} color="subtle" textAlign="center">
-                Hold the QR code to the reader. A good scan checks them in with no extra tap.
+                Hold the QR code to the reader. It checks the list on this iPad, so a good scan needs no wifi and no extra tap.
               </Typography>
               {recent[0] && (
                 <Typography m={0} color="subtle">
@@ -474,12 +545,12 @@ export default function Team10Playground() {
         {phase.name === "reading" && (
           <Tile orientation="vertical" highlightVariant="info" borderVariant="info" p={4} width="100%">
             <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={5}>
-              <Loader loaderType="ring" size="large" loaderLabel="Reading badge" showLabel />
+              <Loader loaderType="ring" size="large" loaderLabel="Checking the saved list" showLabel />
               <Typography variant="h2" m={0}>
-                Reading badge
+                Checking the saved list
               </Typography>
               <Typography m={0} color="subtle">
-                Hold it still for a moment.
+                Hold it still. This lookup stays on the iPad.
               </Typography>
             </Box>
           </Tile>
@@ -498,8 +569,8 @@ export default function Team10Playground() {
               <Typography m={0} color="positive" weight="medium">
                 Checked in at {phase.time} · {DOOR}
               </Typography>
-              <Message variant="success" title="Wave them through">
-                The badge is already printed. No need to keep them at the desk.
+              <Message variant="success" title="Saved on this iPad">
+                Wave them through. The badge prints on the Door A printer beside you.
               </Message>
               {active.hint && (
                 <Message variant="info" title="Also tell them">
@@ -568,8 +639,8 @@ export default function Team10Playground() {
                 </Button>
               </Box>
               {printed && (
-                <Message variant="success" title="Badge sent to the printer">
-                  Door A printer. Hand it over, then wave them through.
+                <Message variant="success" title="Sent to the printer beside you">
+                  The Door A printer does not use wifi. Hand the badge over, then wave them through.
                 </Message>
               )}
             </Box>
@@ -603,7 +674,12 @@ export default function Team10Playground() {
                 variantType="secondary"
                 size="medium"
                 iconType="tick"
-                onClick={() => checkIn(active.id, `${active.balance} is still due. The cash desk has ${active.name}'s name.`)}
+                onClick={() =>
+                  checkIn(
+                    active.id,
+                    `${active.balance} is still due. Saved on this iPad. Tell the cash desk in person.`,
+                  )
+                }
               >
                 Check in and flag the {active.balance}
               </Button>
@@ -647,7 +723,10 @@ export default function Team10Playground() {
                 size="medium"
                 iconType="tick"
                 onClick={() =>
-                  checkIn(active.id, "Thursday workshop pass used for Wednesday. Registration has been told.")
+                  checkIn(
+                    active.id,
+                    "Thursday pass used today. Saved on this iPad. Tell registration in person, on your left.",
+                  )
                 }
               >
                 Check in on today's list
@@ -668,7 +747,9 @@ export default function Team10Playground() {
               <Typography variant="h1" m={0}>
                 This code isn't on today's list
               </Typography>
-              <Typography m={0}>It may be damaged, a photo of a badge, or from another event.</Typography>
+              <Typography m={0}>
+                It may be damaged, a photo of a badge, or from another event. Nothing on the saved list matches this code.
+              </Typography>
               <Typography m={0} weight="medium">
                 Say: "I can't read this one. What's the name on the badge?"
               </Typography>
